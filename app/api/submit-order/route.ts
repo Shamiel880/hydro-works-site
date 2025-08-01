@@ -1,4 +1,6 @@
 // app/api/submit-order/route.ts
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from "next/server"
 import WooCommerceRestApi from "@woocommerce/woocommerce-rest-api"
 
