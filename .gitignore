@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+
+# Build output
+.next/
+out/
+dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# System files
+.DS_Store
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel/
+
+# Mac metadata
+*.DS_Store
+
+# Optional: ignore IDE settings
+.vscode/
+.idea/
+
+# Optional: OS generated files
+Thumbs.db
