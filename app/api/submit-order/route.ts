@@ -1,10 +1,15 @@
-// app/api/submit-order/route.ts
-export const dynamic = 'force-dynamic'
-
 import { NextRequest, NextResponse } from "next/server"
 import WooCommerceRestApi from "@woocommerce/woocommerce-rest-api"
 
 export async function POST(req: NextRequest) {
+  const api = new WooCommerceRestApi({
+    url: "https://hydroworks.co.za",
+    consumerKey: process.env.WC_API_KEY || "",
+    consumerSecret: process.env.WC_API_SECRET || "",
+    version: "wc/v3",
+    timeout: 10000,
+  })
+
   try {
     const body = await req.json()
 
@@ -16,15 +21,6 @@ export async function POST(req: NextRequest) {
       payment_method = "bacs",
       payment_method_title = "Direct Bank Transfer",
     } = body
-
-    // ✅ Moved inside POST to avoid loading during build
-    const api = new WooCommerceRestApi({
-      url: "https://hydroworks.co.za",
-      consumerKey: process.env.WC_API_KEY!,
-      consumerSecret: process.env.WC_API_SECRET!,
-      version: "wc/v3",
-      timeout: 10000,
-    })
 
     const orderData = {
       payment_method,
