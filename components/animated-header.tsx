@@ -39,42 +39,37 @@ export function AnimatedHeader() {
           />
         </Link>
 
-        {/* Navigation - Centered */}
-        <nav className="hidden lg:flex flex-1 justify-center items-center space-x-8">
-          {[
-            { name: "Store", href: "/store" },
-            { name: "Solutions", href: "/solutions" },
-            { name: "About", href: "/about" },
-            { name: "Contact", href: "/contact" },
-          ].map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className="text-hydro-onyx hover:text-hydro-green font-medium transition-colors"
-            >
-              {item.name}
-            </Link>
-          ))}
-        </nav>
+        {/* Desktop Search + Navigation */}
+        <div className="hidden lg:flex items-center flex-1 justify-end gap-6">
+          <SmartSearch />
+          <nav className="flex items-center space-x-6">
+            {[
+              { name: "Store", href: "/store" },
+              { name: "Solutions", href: "/solutions" },
+              { name: "About", href: "/about" },
+              { name: "Contact", href: "/contact" },
+            ].map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="text-hydro-onyx hover:text-hydro-green font-medium transition-colors"
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        {/* Right Side */}
-        <div className="flex items-center gap-4">
-          {/* Desktop Search */}
-          <div className="hidden md:block">
-            <SmartSearch />
-          </div>
-
-          {/* Cart Icon with Counter */}
-          <Link href="/cart" className="relative hidden md:inline-block">
-            <ShoppingCart className="w-6 h-6 text-hydro-onyx hover:text-hydro-green" />
+        {/* Mobile Cart + Menu */}
+        <div className="flex items-center gap-3 lg:hidden">
+          <Link href="/cart" className="relative">
+            <ShoppingCart className="w-6 h-6 text-hydro-onyx" />
             {totalItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-hydro-green text-white text-xs font-medium px-1.5 py-0.5 rounded-full">
                 {totalItems}
               </span>
             )}
           </Link>
-
-          {/* Mobile Menu */}
           <MobileMenu />
         </div>
       </div>

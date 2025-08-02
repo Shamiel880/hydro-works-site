@@ -7,9 +7,11 @@ import Link from "next/link"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { SmartSearch } from "./smart-search"
+import { usePathname } from "next/navigation"
 
 export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
 
   const menuItems = [
     { name: "Home", href: "/", icon: Home },
@@ -23,7 +25,7 @@ export function MobileMenu() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Toggle Button */}
       <Button
         variant="ghost"
         size="icon"
@@ -33,7 +35,7 @@ export function MobileMenu() {
         <Menu className="h-6 w-6" />
       </Button>
 
-      {/* Mobile Menu Overlay */}
+      {/* Menu Drawer + Backdrop */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -46,7 +48,7 @@ export function MobileMenu() {
               onClick={closeMenu}
             />
 
-            {/* Menu Panel */}
+            {/* Slide-in Menu */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -85,10 +87,12 @@ export function MobileMenu() {
                         <Link
                           href={item.href}
                           onClick={closeMenu}
-                          className="flex items-center space-x-3 p-3 rounded-xl text-hydro-onyx hover:bg-hydro-mint/20 hover:text-hydro-green transition-colors"
+                          className={`flex items-center space-x-3 p-3 rounded-xl text-hydro-onyx hover:bg-hydro-mint/20 hover:text-hydro-green transition-colors ${
+                            pathname === item.href ? "bg-hydro-mint/30 text-hydro-green font-semibold" : ""
+                          }`}
                         >
                           <item.icon className="h-5 w-5" />
-                          <span className="font-medium">{item.name}</span>
+                          <span>{item.name}</span>
                         </Link>
                       </li>
                     ))}
@@ -97,10 +101,12 @@ export function MobileMenu() {
 
                 {/* Footer */}
                 <div className="p-6 border-t border-hydro-green/10">
-                  <Button className="w-full bg-hydro-green hover:bg-hydro-green/90 text-hydro-white">
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    View Cart
-                  </Button>
+                  <Link href="/cart" onClick={closeMenu}>
+                    <Button className="w-full bg-hydro-green hover:bg-hydro-green/90 text-hydro-white">
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      View Cart
+                    </Button>
+                  </Link>
                   <p className="text-center text-sm text-hydro-onyx/60 mt-4">Cape Town, South Africa</p>
                 </div>
               </div>
