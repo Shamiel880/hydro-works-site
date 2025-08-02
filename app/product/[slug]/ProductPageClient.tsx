@@ -152,7 +152,9 @@ export default function ProductPageClient({ product }: Props) {
                             key={i}
                             className={`h-5 w-5 ${
                               i <
-                              Math.floor(Number.parseFloat(product.average_rating))
+                              Math.floor(
+                                Number.parseFloat(product.average_rating)
+                              )
                                 ? "text-yellow-400 fill-current"
                                 : "text-gray-300"
                             }`}
@@ -160,7 +162,8 @@ export default function ProductPageClient({ product }: Props) {
                         ))}
                       </div>
                       <span className="text-hydro-onyx/70">
-                        {product.average_rating} ({product.rating_count} reviews)
+                        {product.average_rating} ({product.rating_count}{" "}
+                        reviews)
                       </span>
                     </div>
                   )}
@@ -168,10 +171,13 @@ export default function ProductPageClient({ product }: Props) {
                 {/* Price */}
                 <div className="flex items-center gap-4">
                   <div className="text-3xl font-bold text-hydro-green">
-                    {selectedVariation
+                    {selectedVariation?.price
                       ? `R${selectedVariation.price}`
-                      : cleanPriceHtml}
+                      : decodeHTMLEntities(
+                          product.price_html.replace(/<[^>]*>/g, "")
+                        )}
                   </div>
+
                   {product.on_sale && (
                     <Badge className="bg-red-500 text-white">Sale</Badge>
                   )}
@@ -187,7 +193,9 @@ export default function ProductPageClient({ product }: Props) {
                       <select
                         className="border border-hydro-green/20 rounded-xl p-3 w-full text-hydro-onyx focus:outline-none focus:ring-2 focus:ring-hydro-green/30"
                         value={selectedAttributes[attr.name] || ""}
-                        onChange={(e) => handleAttributeChange(attr.name, e.target.value)}
+                        onChange={(e) =>
+                          handleAttributeChange(attr.name, e.target.value)
+                        }
                       >
                         <option value="">Select {attr.name}</option>
                         {attr.options.map((option) => (
@@ -203,7 +211,9 @@ export default function ProductPageClient({ product }: Props) {
                 {product.short_description && (
                   <div
                     className="text-base text-hydro-onyx/80 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: product.short_description }}
+                    dangerouslySetInnerHTML={{
+                      __html: product.short_description,
+                    }}
                   />
                 )}
 
@@ -217,11 +227,8 @@ export default function ProductPageClient({ product }: Props) {
                         size="lg"
                         className="flex-1 bg-hydro-green text-white"
                         onClick={() => {
-                          addToCart(
-                            selectedVariation || product,
-                            1
-                          );
-                          toast.success("Product added to cart")
+                          addToCart(selectedVariation || product, 1);
+                          toast.success("Product added to cart");
                         }}
                       >
                         <ShoppingCart className="h-5 w-5 mr-2" />
@@ -252,7 +259,9 @@ export default function ProductPageClient({ product }: Props) {
                     <div className="space-y-2 text-sm">
                       {product.attributes.map((attribute, index) => (
                         <div key={index} className="flex justify-between">
-                          <span className="text-hydro-onyx/70">{attribute.name}:</span>
+                          <span className="text-hydro-onyx/70">
+                            {attribute.name}:
+                          </span>
                           <span className="text-hydro-onyx font-medium">
                             {attribute.options.join(", ")}
                           </span>
