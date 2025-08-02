@@ -1,3 +1,5 @@
+// app/product/[slug]/page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { WooCommerceProduct, WooCommerceVariation } from "@/types/woocommerce";
 import { AnimatedHeader } from "@/components/animated-header";
-import { useCart } from "@/lib/cartContext";  // <-- Import useCart here
+import { useCart } from "@/lib/cartContext";
 import { toast } from "react-hot-toast"
 
 interface Props {
@@ -24,7 +26,7 @@ function decodeHTMLEntities(text: string): string {
 }
 
 export default function ProductPageClient({ product }: Props) {
-  const { addToCart } = useCart();  // <-- Get addToCart from context
+  const { addToCart } = useCart();
   const isVariable = product.type === "variable";
   const [selectedVariation, setSelectedVariation] = useState<WooCommerceVariation | null>(null);
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
