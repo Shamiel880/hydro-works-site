@@ -1,17 +1,15 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Leaf, Users, MapPin, Phone, Mail, ArrowRight, MessageCircle, Zap, Target } from "lucide-react"
+import { Leaf, Users, Target, Zap } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
-import { motion, useScroll, useTransform, useInView } from "framer-motion"
+import { motion, useInView } from "framer-motion"
 import { useRef } from "react"
 import { AnimatedHeader } from "@/components/animated-header"
 import { HeroBackground } from "@/components/hero-background"
 import { ProductGrid } from "@/components/product-grid"
 import { SolutionsCarousel } from "@/components/solutions-carousel"
+import { ArrowRight } from "lucide-react"
 
 export default function HomePage() {
   const heroRef = useRef(null)
@@ -22,8 +20,11 @@ export default function HomePage() {
   const aboutInView = useInView(aboutRef, { once: true, margin: "-100px" })
   const solutionsInView = useInView(solutionsRef, { once: true, margin: "-100px" })
 
-  const { scrollYProgress } = useScroll()
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"])
+  const fadeUp = {
+    initial: { opacity: 0, y: 50 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.8, ease: "easeOut" },
+  }
 
   return (
     <div className="min-h-screen bg-hydro-white overflow-x-hidden">
@@ -34,9 +35,13 @@ export default function HomePage() {
         <HeroBackground />
         <motion.div
           ref={heroRef}
-          className="container relative z-10 text-center"
-          initial={{ opacity: 0, y: 50 }}
-          animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+          className="container relative z-10 text-center max-w-4xl px-4"
+          initial="initial"
+          animate={heroInView ? "animate" : "initial"}
+          variants={{
+            initial: { opacity: 0, y: 50 },
+            animate: { opacity: 1, y: 0 },
+          }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <motion.h1
@@ -80,11 +85,15 @@ export default function HomePage() {
 
       {/* Solutions Section */}
       <section ref={solutionsRef} className="py-20 lg:py-32 bg-gradient-to-b from-hydro-white to-hydro-mint/20">
-        <div className="container">
+        <div className="container max-w-7xl">
           <motion.div
             className="mx-auto max-w-2xl text-center mb-16"
-            initial={{ opacity: 0, y: 50 }}
-            animate={solutionsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+            initial="initial"
+            animate={solutionsInView ? "animate" : "initial"}
+            variants={{
+              initial: { opacity: 0, y: 50 },
+              animate: { opacity: 1, y: 0 },
+            }}
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-3xl font-bold tracking-tight text-hydro-onyx sm:text-4xl mb-4">
@@ -100,13 +109,17 @@ export default function HomePage() {
 
       {/* Hydroponic Systems */}
       <section className="py-20 lg:py-32">
-        <div className="container">
+        <div className="container max-w-7xl">
           <motion.div
             className="mx-auto max-w-2xl text-center mb-16"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            initial="initial"
+            whileInView="animate"
             viewport={{ once: true, margin: "-100px" }}
+            variants={{
+              initial: { opacity: 0, y: 50 },
+              animate: { opacity: 1, y: 0 },
+            }}
+            transition={{ duration: 0.8 }}
           >
             <h2 className="text-3xl font-bold tracking-tight text-hydro-onyx sm:text-4xl">Hydroponic Systems</h2>
             <p className="mt-4 text-lg text-hydro-onyx/70">
@@ -119,13 +132,17 @@ export default function HomePage() {
 
       {/* Organic Inputs */}
       <section className="py-20 lg:py-32 bg-hydro-mint/10">
-        <div className="container">
+        <div className="container max-w-7xl">
           <motion.div
             className="mx-auto max-w-2xl text-center mb-16"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            initial="initial"
+            whileInView="animate"
             viewport={{ once: true, margin: "-100px" }}
+            variants={{
+              initial: { opacity: 0, y: 50 },
+              animate: { opacity: 1, y: 0 },
+            }}
+            transition={{ duration: 0.8 }}
           >
             <h2 className="text-3xl font-bold tracking-tight text-hydro-onyx sm:text-4xl">Organic Inputs</h2>
             <p className="mt-4 text-lg text-hydro-onyx/70">
@@ -138,13 +155,17 @@ export default function HomePage() {
 
       {/* Featured Products */}
       <section className="py-20 lg:py-32">
-        <div className="container">
+        <div className="container max-w-7xl">
           <motion.div
             className="mx-auto max-w-2xl text-center mb-16"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            initial="initial"
+            whileInView="animate"
             viewport={{ once: true, margin: "-100px" }}
+            variants={{
+              initial: { opacity: 0, y: 50 },
+              animate: { opacity: 1, y: 0 },
+            }}
+            transition={{ duration: 0.8 }}
           >
             <h2 className="text-3xl font-bold tracking-tight text-hydro-onyx sm:text-4xl">Featured Products</h2>
             <p className="mt-4 text-lg text-hydro-onyx/70">Our most popular and recommended growing solutions</p>
@@ -155,11 +176,15 @@ export default function HomePage() {
 
       {/* About Section */}
       <section ref={aboutRef} className="py-20 lg:py-32">
-        <div className="container">
+        <div className="container max-w-7xl">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={aboutInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
+              initial="initial"
+              animate={aboutInView ? "animate" : "initial"}
+              variants={{
+                initial: { opacity: 0, x: -50 },
+                animate: { opacity: 1, x: 0 },
+              }}
               transition={{ duration: 0.8 }}
             >
               <h2 className="text-3xl font-bold tracking-tight text-hydro-onyx sm:text-4xl mb-6">
@@ -171,22 +196,19 @@ export default function HomePage() {
               </p>
 
               <div className="grid grid-cols-2 gap-6 mb-8">
-                <motion.div
-                  className="text-center p-4 rounded-xl bg-hydro-mint/30"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <div className="text-2xl font-bold text-hydro-green mb-1">500+</div>
-                  <div className="text-sm text-hydro-onyx/70">Active Growers</div>
-                </motion.div>
-                <motion.div
-                  className="text-center p-4 rounded-xl bg-hydro-mint/30"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <div className="text-2xl font-bold text-hydro-green mb-1">8+</div>
-                  <div className="text-sm text-hydro-onyx/70">Years Experience</div>
-                </motion.div>
+                {[{ label: "Active Growers", value: "500+" }, { label: "Years Experience", value: "8+" }].map(
+                  ({ label, value }, idx) => (
+                    <motion.div
+                      key={idx}
+                      className="text-center p-4 rounded-xl bg-hydro-mint/30"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <div className="text-2xl font-bold text-hydro-green mb-1">{value}</div>
+                      <div className="text-sm text-hydro-onyx/70">{label}</div>
+                    </motion.div>
+                  )
+                )}
               </div>
 
               <div className="space-y-4 mb-8">
@@ -195,16 +217,16 @@ export default function HomePage() {
                   { icon: Leaf, text: "Sustainable growing practices" },
                   { icon: Zap, text: "Smart automation systems" },
                   { icon: Users, text: "Local Cape Town expertise" },
-                ].map((item, index) => (
+                ].map(({ icon: Icon, text }, idx) => (
                   <motion.div
-                    key={index}
+                    key={idx}
                     className="flex items-center"
                     initial={{ opacity: 0, x: -20 }}
                     animate={aboutInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    transition={{ duration: 0.6, delay: idx * 0.1 }}
                   >
-                    <item.icon className="h-5 w-5 text-hydro-green mr-3" />
-                    <span className="text-hydro-onyx">{item.text}</span>
+                    <Icon className="h-5 w-5 text-hydro-green mr-3" />
+                    <span className="text-hydro-onyx">{text}</span>
                   </motion.div>
                 ))}
               </div>
