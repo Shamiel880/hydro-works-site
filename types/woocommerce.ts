@@ -80,6 +80,11 @@ export interface WooCommerceProduct {
   grouped_products: number[]
   menu_order: number
   meta_data: any[]
+  parent_data?: {
+    id: number
+    name: string
+    slug: string
+  }
 
   // Full variation data for variable products (optional)
   variation_data?: WooCommerceVariation[]
