@@ -135,8 +135,8 @@ export default function ProductPageClient({ product }: Props) {
                 <Image
                   src={mainImage}
                   alt={product.name}
-                  width={800}
-                  height={800}
+                  width={700}
+                  height={700}
                   className="w-full h-full object-contain rounded-2xl"
                   priority
                 />
