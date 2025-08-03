@@ -1,12 +1,6 @@
 "use client"
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useRef,
-} from "react"
+import React, { createContext, useContext, useEffect, useState, useRef } from "react"
 import toast from "react-hot-toast"
 import type { WooCommerceProduct } from "@/types/woocommerce"
 
@@ -45,23 +39,30 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([])
   const toastRef = useRef<string | null>(null)
 
+  // Load cart from localStorage
   useEffect(() => {
     if (typeof window === "undefined") return
     const storedCart = localStorage.getItem("hydroworks_cart")
     if (storedCart) {
-      setCart(JSON.parse(storedCart))
+      try {
+        setCart(JSON.parse(storedCart))
+      } catch (e) {
+        console.error("Failed to parse cart data", e)
+        localStorage.removeItem("hydroworks_cart")
+      }
     }
   }, [])
 
+  // Save cart to localStorage
   useEffect(() => {
     if (typeof window === "undefined") return
     localStorage.setItem("hydroworks_cart", JSON.stringify(cart))
   }, [cart])
 
-  // Show toast after cart update
+  // Show toasts after cart updates
   useEffect(() => {
     if (toastRef.current) {
-      toast.success(toastRef.current)
+      toast.success(toastRef.current, { position: "bottom-center" })
       toastRef.current = null
     }
   }, [cart])
@@ -72,36 +73,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       displayName: product.name,
     }
 
+    // Handle variation products
     if (productToAdd.type === "variation" && productToAdd.parent_id) {
       const parentProduct = await fetchParentProduct(productToAdd.parent_id)
 
       if (parentProduct) {
-        const getAttributeValues = () => {
-          if (Array.isArray(productToAdd.attributes)) {
-            return productToAdd.attributes
-              .map(attr => attr?.option)
-              .filter(Boolean)
-              .join(", ")
-          }
-          if (
-            typeof productToAdd.attributes === "object" &&
-            productToAdd.attributes !== null
-          ) {
-            return Object.values(productToAdd.attributes)
-              .filter(val => typeof val === "string" && val.length > 0)
-              .join(", ")
-          }
-          return ""
-        }
-
-        const attributeValues = getAttributeValues()
+        // Format variation attributes
+        const attributeValues = 
+          Array.isArray(productToAdd.attributes)
+            ? productToAdd.attributes
+                .map(attr => attr?.option)
+                .filter(Boolean)
+                .join(", ")
+            : typeof productToAdd.attributes === "object" 
+            ? Object.values(productToAdd.attributes)
+                .filter(val => typeof val === "string" && val.length > 0)
+                .join(", ")
+            : ""
 
         productToAdd = {
           ...productToAdd,
           displayName: `${parentProduct.name}${attributeValues ? ` - ${attributeValues}` : ""}`,
-          images: productToAdd.images?.length
-            ? productToAdd.images
-            : parentProduct.images,
+          // Use parent images if variation has none
+          images: productToAdd.images?.length ? productToAdd.images : parentProduct.images,
           parent_data: {
             id: parentProduct.id,
             name: parentProduct.name,
@@ -112,6 +106,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Remove unnecessary fields
     const { description, short_description, ...cleanProduct } = productToAdd
 
     setCart(prevCart => {
@@ -132,7 +127,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }
 
   function removeFromCart(productId: number) {
-    setCart(prevCart => prevCart.filter(item => item.product.id !== productId))
+    setCart(prevCart => {
+      const itemToRemove = prevCart.find(item => item.product.id === productId)
+      if (itemToRemove) {
+        toastRef.current = `${itemToRemove.product.displayName} removed from cart`
+      }
+      return prevCart.filter(item => item.product.id !== productId)
+    })
   }
 
   function updateQuantity(productId: number, quantity: number) {
@@ -149,6 +150,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   function clearCart() {
     setCart([])
+    toastRef.current = "Cart cleared"
   }
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
