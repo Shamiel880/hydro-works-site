@@ -1,5 +1,3 @@
-// app/product/[slug]/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,10 +7,13 @@ import { ShoppingCart, Star, ArrowLeft, Heart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import type { WooCommerceProduct, WooCommerceVariation } from "@/types/woocommerce";
+import type {
+  WooCommerceProduct,
+  WooCommerceVariation,
+} from "@/types/woocommerce";
 import { AnimatedHeader } from "@/components/animated-header";
 import { useCart } from "@/lib/cartContext";
-import { toast } from "react-hot-toast"
+import { toast } from "react-hot-toast";
 
 interface Props {
   product: WooCommerceProduct;
@@ -28,30 +29,85 @@ function decodeHTMLEntities(text: string): string {
 export default function ProductPageClient({ product }: Props) {
   const { addToCart } = useCart();
   const isVariable = product.type === "variable";
-  const [selectedVariation, setSelectedVariation] = useState<WooCommerceVariation | null>(null);
-  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
-  const [mainImage, setMainImage] = useState(product.images?.[0]?.src || "/placeholder.svg");
+  const [selectedVariation, setSelectedVariation] =
+    useState<WooCommerceVariation | null>(null);
+  const [selectedAttributes, setSelectedAttributes] = useState<
+    Record<string, string>
+  >({});
+  const [mainImage, setMainImage] = useState(
+    product.images?.[0]?.src || "/placeholder.svg"
+  );
   const [cleanPriceHtml, setCleanPriceHtml] = useState("");
 
   useEffect(() => {
     if (!isVariable || !product.variation_data) return;
-    const match = product.variation_data.find((variation) =>
-      variation.attributes.every(
-        (attr) => selectedAttributes[attr.name] === attr.option
-      )
-    );
+
+    const match = product.variation_data.find((variation) => {
+      return variation.attributes.every(({ name, option }) => {
+        return selectedAttributes[name] === option;
+      });
+    });
+
     setSelectedVariation(match || null);
   }, [selectedAttributes, product, isVariable]);
 
   useEffect(() => {
-    if (!selectedVariation) {
-      const plainText = product.price_html.replace(/<[^>]*>/g, "");
-      setCleanPriceHtml(decodeHTMLEntities(plainText));
+    function decode(text: string) {
+      const el =
+        typeof window !== "undefined"
+          ? document.createElement("textarea")
+          : null;
+      if (!el) return text;
+      el.innerHTML = text;
+      return el.value;
     }
-  }, [selectedVariation, product.price_html]);
+
+    function extractPrices(html: string): string {
+      const plain = decode(html.replace(/<[^>]+>/g, " ")).trim();
+      const prices = plain.match(/R[\d,.]+/g);
+
+      if (prices) {
+        const uniquePrices = [
+          ...new Set(prices.map((p) => p.replace(/R/, "").trim())),
+        ];
+        const [first, second] = uniquePrices.map((p) => `R${p}`);
+        if (uniquePrices.length > 1) return `${first} → ${second}`;
+        return first;
+      }
+
+      return decode(plain);
+    }
+
+    if (isVariable) {
+      if (selectedVariation) {
+        setCleanPriceHtml(`R${selectedVariation.price}`);
+      } else if (product.variation_data?.length) {
+        const prices = product.variation_data
+          .map((v) => parseFloat(v.price))
+          .filter((p) => !isNaN(p));
+        if (prices.length) {
+          const min = Math.min(...prices);
+          const max = Math.max(...prices);
+          setCleanPriceHtml(min === max ? `R${min}` : `R${min} – R${max}`);
+        }
+      }
+    } else {
+      setCleanPriceHtml(extractPrices(product.price_html || ""));
+    }
+  }, [selectedVariation, product, isVariable]);
 
   const handleAttributeChange = (name: string, option: string) => {
     setSelectedAttributes((prev) => ({ ...prev, [name]: option }));
+  };
+
+  const isInStock = () => {
+    if (!product.purchasable) return false;
+
+    if (isVariable) {
+      return selectedVariation?.stock_status === "instock";
+    }
+
+    return product.stock_status === "instock";
   };
 
   return (
@@ -60,7 +116,6 @@ export default function ProductPageClient({ product }: Props) {
 
       <div className="pt-24">
         <div className="container py-8">
-          {/* Back Button */}
           <div className="mb-6">
             <Button
               variant="ghost"
@@ -75,15 +130,14 @@ export default function ProductPageClient({ product }: Props) {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12">
-            {/* Product Images */}
             <div className="space-y-4">
-              <div className="overflow-hidden rounded-2xl bg-hydro-mint/20">
+              <div className="overflow-hidden rounded-2xl bg-white aspect-square flex items-center justify-center">
                 <Image
                   src={mainImage}
                   alt={product.name}
                   width={800}
                   height={800}
-                  className="w-full h-auto object-cover rounded-2xl"
+                  className="w-full h-full object-contain rounded-2xl"
                   priority
                 />
               </div>
@@ -109,10 +163,8 @@ export default function ProductPageClient({ product }: Props) {
               )}
             </div>
 
-            {/* Product Info */}
-            <Card className="border-hydro-green/10 rounded-2xl shadow-sm">
+            <Card className="border-hydro-green/10 rounded-2xl shadow-sm bg-hydro-mint/25">
               <CardContent className="p-6 space-y-6">
-                {/* Badge + Icons */}
                 <div className="flex items-center justify-between">
                   {product.categories?.[0] && (
                     <Badge className="bg-hydro-mint/50 text-hydro-green">
@@ -137,12 +189,10 @@ export default function ProductPageClient({ product }: Props) {
                   </div>
                 </div>
 
-                {/* Title */}
                 <h1 className="text-3xl lg:text-4xl font-bold text-hydro-onyx">
                   {product.name}
                 </h1>
 
-                {/* Rating */}
                 {product.average_rating &&
                   Number.parseFloat(product.average_rating) > 0 && (
                     <div className="flex items-center gap-2">
@@ -168,22 +218,15 @@ export default function ProductPageClient({ product }: Props) {
                     </div>
                   )}
 
-                {/* Price */}
                 <div className="flex items-center gap-4">
                   <div className="text-3xl font-bold text-hydro-green">
-                    {selectedVariation?.price
-                      ? `R${selectedVariation.price}`
-                      : decodeHTMLEntities(
-                          product.price_html.replace(/<[^>]*>/g, "")
-                        )}
+                    {cleanPriceHtml}
                   </div>
-
-                  {product.on_sale && (
+                  {product.on_sale && !isVariable && (
                     <Badge className="bg-red-500 text-white">Sale</Badge>
                   )}
                 </div>
 
-                {/* Variable Product Options */}
                 {isVariable &&
                   product.attributes?.map((attr) => (
                     <div key={attr.id}>
@@ -207,7 +250,6 @@ export default function ProductPageClient({ product }: Props) {
                     </div>
                   ))}
 
-                {/* Description */}
                 {product.short_description && (
                   <div
                     className="text-base text-hydro-onyx/80 leading-relaxed"
@@ -217,40 +259,27 @@ export default function ProductPageClient({ product }: Props) {
                   />
                 )}
 
-                {/* Action Buttons */}
                 <div className="space-y-4">
                   {product.purchasable &&
                   product.stock_status === "instock" &&
                   (!isVariable || selectedVariation) ? (
-                    <div className="flex gap-4">
-                      <Button
-                        size="lg"
-                        className="flex-1 bg-hydro-green text-white"
-                        onClick={() => {
-                          addToCart(selectedVariation || product, 1);
-                          toast.success("Product added to cart");
-                        }}
-                      >
-                        <ShoppingCart className="h-5 w-5 mr-2" />
-                        Add to Cart
-                      </Button>
-
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="border-hydro-green text-hydro-green hover:bg-hydro-green hover:text-white"
-                      >
-                        Buy Now
-                      </Button>
-                    </div>
+                    <Button
+                      size="lg"
+                      className="w-full bg-hydro-green text-white hover:bg-hydro-green/90"
+                      onClick={() => {
+                        addToCart(selectedVariation || product, 1);
+                      }}
+                    >
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Add to Cart
+                    </Button>
                   ) : (
-                    <Button size="lg" disabled className="flex-1">
+                    <Button size="lg" disabled className="w-full">
                       Out of Stock
                     </Button>
                   )}
                 </div>
 
-                {/* Features */}
                 {product.attributes?.length > 0 && (
                   <div className="pt-4">
                     <h3 className="font-semibold text-hydro-onyx mb-2">
@@ -274,10 +303,9 @@ export default function ProductPageClient({ product }: Props) {
             </Card>
           </div>
 
-          {/* Long Description */}
           {product.description && (
             <div className="mt-16">
-              <Card className="border-hydro-green/10 rounded-2xl">
+              <Card className="border-hydro-green/10 rounded-2xl shadow-sm bg-hydro-mint/25">
                 <CardContent className="p-8">
                   <h2 className="text-2xl font-bold text-hydro-onyx mb-6">
                     Product Description

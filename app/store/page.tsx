@@ -70,7 +70,7 @@ export default function StorePage() {
       try {
         const params = new URLSearchParams({
           page: currentPage.toString(),
-          per_page: "12",
+          per_page: "24",
           orderby: sortBy === "price-low" ? "price" : sortBy === "price-high" ? "price" : sortBy,
           order: sortBy === "price-high" ? "desc" : "asc",
         })
