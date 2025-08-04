@@ -69,12 +69,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   async function addToCart(product: WooCommerceProduct, quantity = 1) {
     let productToAdd = {
       ...product,
-      displayName: product.name,
+      displayName: product.name, // default fallback
     }
-
+  
     if (productToAdd.type === "variation" && productToAdd.parent_id) {
       const parentProduct = await fetchParentProduct(productToAdd.parent_id)
-
+  
       if (parentProduct) {
         const getAttributeValues = () => {
           if (Array.isArray(productToAdd.attributes)) {
@@ -83,25 +83,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               .filter(Boolean)
               .join(", ")
           }
-          if (
-            typeof productToAdd.attributes === "object" &&
-            productToAdd.attributes !== null
-          ) {
+          if (typeof productToAdd.attributes === "object" && productToAdd.attributes !== null) {
             return Object.values(productToAdd.attributes)
               .filter(val => typeof val === "string" && val.length > 0)
               .join(", ")
           }
           return ""
         }
-
+  
         const attributeValues = getAttributeValues()
-
+  
         productToAdd = {
           ...productToAdd,
           displayName: `${parentProduct.name}${attributeValues ? ` - ${attributeValues}` : ""}`,
-          images: productToAdd.images?.length
-            ? productToAdd.images
-            : parentProduct.images,
+          images: productToAdd.images?.length ? productToAdd.images : parentProduct.images,
           parent_data: {
             id: parentProduct.id,
             name: parentProduct.name,
@@ -111,25 +106,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
-
+  
     const { description, short_description, ...cleanProduct } = productToAdd
-
-    setCart(prevCart => {
+  
+    setCart((prevCart) => {
       const existingIndex = prevCart.findIndex(
-        item => item.product.id === cleanProduct.id
+        (item) => item.product.id === cleanProduct.id
       )
-
+  
       if (existingIndex !== -1) {
         const updatedCart = [...prevCart]
         updatedCart[existingIndex].quantity += quantity
-        toastRef.current = `Updated quantity for ${productToAdd.displayName}`
         return updatedCart
       }
-
-      toastRef.current = `${productToAdd.displayName} added to cart`
+  
       return [...prevCart, { product: cleanProduct, quantity }]
     })
-  }
+  }  
 
   function removeFromCart(productId: number) {
     setCart(prevCart => prevCart.filter(item => item.product.id !== productId))
