@@ -284,12 +284,6 @@ export function Footer() {
             >
               Terms & Conditions
             </Link>
-            <Link
-              href="/legal/popia"
-              className="hover:text-hydro-green transition-colors"
-            >
-              POPIA Act
-            </Link>
           </div>
         </div>
       </div>
