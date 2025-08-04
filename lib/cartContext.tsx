@@ -74,36 +74,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   
     if (productToAdd.type === "variation" && productToAdd.parent_id) {
       const parentProduct = await fetchParentProduct(productToAdd.parent_id)
-  
-      if (parentProduct) {
-        const getAttributeValues = () => {
-          if (Array.isArray(productToAdd.attributes)) {
-            return productToAdd.attributes
-              .map(attr => attr?.option)
-              .filter(Boolean)
-              .join(", ")
-          }
-          if (typeof productToAdd.attributes === "object" && productToAdd.attributes !== null) {
-            return Object.values(productToAdd.attributes)
-              .filter(val => typeof val === "string" && val.length > 0)
-              .join(", ")
-          }
-          return ""
+    
+      const getAttributeValues = () => {
+        if (Array.isArray(productToAdd.attributes)) {
+          return productToAdd.attributes.map(attr => attr?.option).filter(Boolean).join(", ")
         }
-  
-        const attributeValues = getAttributeValues()
-  
-        productToAdd = {
-          ...productToAdd,
-          displayName: `${parentProduct.name}${attributeValues ? ` - ${attributeValues}` : ""}`,
-          images: productToAdd.images?.length ? productToAdd.images : parentProduct.images,
-          parent_data: {
-            id: parentProduct.id,
-            name: parentProduct.name,
-            slug: parentProduct.slug,
-            images: parentProduct.images,
-          },
+        if (typeof productToAdd.attributes === "object") {
+          return Object.values(productToAdd.attributes)
+            .filter(val => typeof val === "string" && val.length > 0)
+            .join(", ")
         }
+        return ""
+      }
+    
+      const attributeValues = getAttributeValues()
+    
+      productToAdd = {
+        ...productToAdd,
+        displayName: parentProduct
+          ? `${parentProduct.name}${attributeValues ? ` - ${attributeValues}` : ""}`
+          : `${product.name}${attributeValues ? ` - ${attributeValues}` : ""}`, // fallback for production
+        images: productToAdd.images?.length
+          ? productToAdd.images
+          : parentProduct?.images || [],
+        parent_data: parentProduct
+          ? {
+              id: parentProduct.id,
+              name: parentProduct.name,
+              slug: parentProduct.slug,
+              images: parentProduct.images,
+            }
+          : undefined,
       }
     }
   
