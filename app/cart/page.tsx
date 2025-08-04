@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ShoppingCart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,9 +10,9 @@ import { useCart } from "@/lib/cartContext";
 import toast from "react-hot-toast";
 
 export default function CartPage() {
+  const router = useRouter();
   const { cart, removeFromCart, updateQuantity, totalPrice } = useCart();
 
-  // Get product image or fallback to parent's first image
   const getProductImage = (product: any) => {
     if (product.images?.length > 0) return product.images[0].src;
     if (product.parent_data?.images?.length > 0)
@@ -19,16 +20,13 @@ export default function CartPage() {
     return "/placeholder.png";
   };
 
-  // Get product title (use displayName if available, otherwise parent name or product name)
   const getProductTitle = (product: any) => {
     return product.displayName || product.parent_data?.name || product.name;
   };
 
-  // Get formatted variation attributes
   const getVariationAttributes = (product: any) => {
     if (!product.attributes) return null;
 
-    // Case 1: Attributes is an array of {name, option} objects
     if (Array.isArray(product.attributes)) {
       return product.attributes
         .map((attr) => attr?.option)
@@ -36,7 +34,6 @@ export default function CartPage() {
         .join(", ");
     }
 
-    // Case 2: Attributes is a plain object {size: "500ml", color: "red"}
     if (typeof product.attributes === "object" && product.attributes !== null) {
       return Object.values(product.attributes)
         .filter((val) => val !== null && val !== undefined)
@@ -180,6 +177,7 @@ export default function CartPage() {
                   <Button
                     size="lg"
                     className="w-full bg-hydro-green text-white hover:bg-hydro-green/90"
+                    onClick={() => router.push("/checkout")}
                   >
                     Proceed to Checkout
                   </Button>
