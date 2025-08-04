@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { MapPin, Phone, Mail, MessageCircle } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { motion } from "framer-motion"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { MapPin, Phone, Mail, MessageCircle } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
 export function Footer() {
   const [formData, setFormData] = useState({
@@ -21,32 +21,34 @@ export function Footer() {
     subject: "Website Footer Contact",
     budget: "",
     timeline: "",
-  })
+  });
 
-  const [loading, setLoading] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
-    setSubmitted(false)
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSubmitted(false);
 
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
-      })
+      });
 
-      if (!res.ok) throw new Error("Failed to send message")
-      setSubmitted(true)
+      if (!res.ok) throw new Error("Failed to send message");
+      setSubmitted(true);
       setFormData({
         firstName: "",
         lastName: "",
@@ -58,13 +60,13 @@ export function Footer() {
         subject: "Website Footer Contact",
         budget: "",
         timeline: "",
-      })
+      });
     } catch (err) {
-      setError("Something went wrong. Please try again.")
+      setError("Something went wrong. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <footer className="bg-hydro-onyx text-hydro-white">
@@ -90,10 +92,12 @@ export function Footer() {
               </div>
 
               <p className="text-hydro-white/80 mb-8 max-w-md leading-relaxed">
-                Hydro Works is a Cape Town–based horticultural solutions company with a national footprint.
-                Since 2020, we’ve partnered with home growers, small farms, and commercial operators to deliver
-                hydroponic systems, automation, and sustainable growing media. We build scalable solutions for
-                any stage of your horticultural journey—no project is too small.
+                Hydro Works is a Cape Town–based horticultural solutions company
+                with a national footprint. Since 2020, we’ve partnered with home
+                growers, small farms, and commercial operators to deliver
+                hydroponic systems, automation, and sustainable growing media.
+                We build scalable solutions for any stage of your horticultural
+                journey—no project is too small.
               </p>
 
               <div className="space-y-4 text-sm">
@@ -111,13 +115,15 @@ export function Footer() {
                 </div>
               </div>
 
-              <Button
-                className="mt-8 bg-hydro-green hover:bg-hydro-green/90 text-hydro-white flex items-center justify-center max-w-xs"
-                aria-label="WhatsApp Us"
+              <Link
+                href="https://wa.me/27793215597?text=Hi%20Hydro%20Works%2C%20I'm%20interested%20in%20your%20horticultural%20solutions."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-8 inline-flex items-center justify-center max-w-xs bg-hydro-green hover:bg-hydro-green/90 text-hydro-white px-4 py-2 rounded transition-all"
               >
                 <MessageCircle className="h-5 w-5 mr-2" />
                 WhatsApp Us
-              </Button>
+              </Link>
             </div>
           </motion.div>
 
@@ -179,11 +185,11 @@ export function Footer() {
               </Button>
 
               {submitted && (
-                <p className="text-sm text-green-400 mt-2">Your message has been sent successfully.</p>
+                <p className="text-sm text-green-400 mt-2">
+                  Your message has been sent successfully.
+                </p>
               )}
-              {error && (
-                <p className="text-sm text-red-400 mt-2">{error}</p>
-              )}
+              {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
             </form>
 
             {/* Footer Links Below Form */}
@@ -192,27 +198,42 @@ export function Footer() {
                 <h4 className="font-semibold mb-3">Solutions</h4>
                 <ul className="space-y-2 text-hydro-white/70">
                   <li>
-                    <Link href="/solutions" className="hover:text-hydro-green transition-colors">
+                    <Link
+                      href="/solutions#hydroponics"
+                      className="hover:text-hydro-green transition-colors"
+                    >
                       Hydroponic Systems
                     </Link>
                   </li>
                   <li>
-                    <Link href="/solutions" className="hover:text-hydro-green transition-colors">
+                    <Link
+                      href="/solutions#organic-growing"
+                      className="hover:text-hydro-green transition-colors"
+                    >
                       Organic Inputs
                     </Link>
                   </li>
                   <li>
-                    <Link href="/solutions" className="hover:text-hydro-green transition-colors">
+                    <Link
+                      href="/solutions#organic-growing"
+                      className="hover:text-hydro-green transition-colors"
+                    >
                       Grow Media
                     </Link>
                   </li>
                   <li>
-                    <Link href="/solutions" className="hover:text-hydro-green transition-colors">
+                    <Link
+                      href="/solutions#smart-automation"
+                      className="hover:text-hydro-green transition-colors"
+                    >
                       Automation
                     </Link>
                   </li>
                   <li>
-                    <Link href="/store" className="hover:text-hydro-green transition-colors">
+                    <Link
+                      href="/store"
+                      className="hover:text-hydro-green transition-colors"
+                    >
                       Store
                     </Link>
                   </li>
@@ -222,12 +243,18 @@ export function Footer() {
                 <h4 className="font-semibold mb-3">Company</h4>
                 <ul className="space-y-2 text-hydro-white/70">
                   <li>
-                    <Link href="/about" className="hover:text-hydro-green transition-colors">
+                    <Link
+                      href="/about"
+                      className="hover:text-hydro-green transition-colors"
+                    >
                       About Us
                     </Link>
                   </li>
                   <li>
-                    <Link href="/contact" className="hover:text-hydro-green transition-colors">
+                    <Link
+                      href="/contact"
+                      className="hover:text-hydro-green transition-colors"
+                    >
                       Contact
                     </Link>
                   </li>
@@ -241,20 +268,31 @@ export function Footer() {
       {/* Legal */}
       <div className="border-t border-hydro-white/10 py-6">
         <div className="container max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between text-sm text-hydro-white/70 gap-4">
-          <p>&copy; {new Date().getFullYear()} Hydro Works. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} Hydro Works. All rights reserved.
+          </p>
           <div className="flex space-x-6">
-            <Link href="/legal/privacy-policy" className="hover:text-hydro-green transition-colors">
+            <Link
+              href="/legal/privacy-policy"
+              className="hover:text-hydro-green transition-colors"
+            >
               Privacy Policy
             </Link>
-            <Link href="/legal/terms-and-conditions" className="hover:text-hydro-green transition-colors">
+            <Link
+              href="/legal/terms-and-conditions"
+              className="hover:text-hydro-green transition-colors"
+            >
               Terms & Conditions
             </Link>
-            <Link href="/legal/popia" className="hover:text-hydro-green transition-colors">
+            <Link
+              href="/legal/popia"
+              className="hover:text-hydro-green transition-colors"
+            >
               POPIA Act
             </Link>
           </div>
         </div>
       </div>
     </footer>
-  )
+  );
 }

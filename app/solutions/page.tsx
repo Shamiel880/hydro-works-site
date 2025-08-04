@@ -47,7 +47,8 @@ const solutions = [
       "R&D labs",
       "Educational projects",
     ],
-    priceRange: "R 12,000 - R 85,000",
+    shortDescription:
+      "Smart automation solutions that streamline your grow operations with remote monitoring and control.",
     image: "/images/smart-automation.webp",
   },
   {
@@ -76,7 +77,8 @@ const solutions = [
       "Indoor systems",
       "Commercial propagation",
     ],
-    priceRange: "R 2,000 - R 150,000",
+    shortDescription:
+      "Efficient hydroponic systems designed for high yields and resource-saving growing.",
     image: "/images/hydroponic-systems.webp",
   },
   {
@@ -105,7 +107,8 @@ const solutions = [
       "Soil gardens",
       "Sustainable communities",
     ],
-    priceRange: "R 150 - R 2,500",
+    shortDescription:
+      "Organic, biology-driven growing media and nutrients supporting healthy soil and plants.",
     image: "/images/organic-growing.webp",
   },
   {
@@ -134,7 +137,8 @@ const solutions = [
       "Workshops & training",
       "Urban regeneration",
     ],
-    priceRange: "Tailored to each project",
+    shortDescription:
+      "Eco-conscious growing systems and practices designed to reduce environmental impact.",
     image: "/images/sustainability-values.webp",
   },
   {
@@ -163,7 +167,8 @@ const solutions = [
       "Co-ops & NGOs",
       "Agricultural schools",
     ],
-    priceRange: "R 500 - R 15,000",
+    shortDescription:
+      "Personalized advice and support for growers at every stage of their journey.",
     image: "/images/consultation.webp",
   },
 ]
@@ -194,16 +199,19 @@ export default function SolutionsPage() {
               levels—from backyard gardens to commercial cultivation.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white">
-                Get Custom Quote
-                <ArrowRight className="ml-2 h-5 w-5" />
+              <Button size="lg" className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white" asChild>
+                <Link href="/contact">
+                  Get Custom Quote
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 className="border-hydro-green text-hydro-green hover:bg-hydro-green hover:text-hydro-white bg-transparent"
+                asChild
               >
-                Download Catalog
+                <Link href="/store">Explore Our Store</Link>
               </Button>
             </div>
           </motion.div>
@@ -217,6 +225,7 @@ export default function SolutionsPage() {
             {solutions.map((solution, index) => (
               <motion.div
                 key={solution.id}
+                id={solution.id} // Anchor target for footer links
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: index * 0.1 }}
@@ -250,7 +259,7 @@ export default function SolutionsPage() {
                         </div>
                         <div>
                           <h2 className="text-2xl font-bold text-hydro-onyx">{solution.title}</h2>
-                          <p className="text-hydro-green font-medium">{solution.priceRange}</p>
+                          <p className="text-hydro-green font-medium">{solution.shortDescription}</p>
                         </div>
                       </div>
 
@@ -304,12 +313,15 @@ export default function SolutionsPage() {
                       </div>
 
                       <div className="flex gap-3">
-                        <Button className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white">Get Quote</Button>
+                        <Button asChild className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white">
+                          <Link href="/contact">Get Quote</Link>
+                        </Button>
                         <Button
+                          asChild
                           variant="outline"
                           className="border-hydro-green text-hydro-green hover:bg-hydro-green hover:text-hydro-white bg-transparent"
                         >
-                          Learn More
+                          <Link href="/store">View Our Store</Link>
                         </Button>
                       </div>
                     </div>
