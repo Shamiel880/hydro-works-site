@@ -113,15 +113,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existingIndex = prevCart.findIndex(
         (item) => item.product.id === cleanProduct.id
       )
-  
+    
       if (existingIndex !== -1) {
         const updatedCart = [...prevCart]
         updatedCart[existingIndex].quantity += quantity
+        toastRef.current = `Updated quantity for ${productToAdd.displayName}`
         return updatedCart
       }
-  
+    
+      toastRef.current = `${productToAdd.displayName} added to cart`
       return [...prevCart, { product: cleanProduct, quantity }]
     })
+    
   }  
 
   function removeFromCart(productId: number) {
