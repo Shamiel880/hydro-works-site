@@ -19,6 +19,21 @@ export async function GET(request: NextRequest) {
   const credentials = Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")
 
   try {
+    // Fetch parent product data
+    const parentRes = await fetch(`${apiUrl}/products/${productId}`, {
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        "Content-Type": "application/json",
+      },
+    })
+
+    if (!parentRes.ok) {
+      return NextResponse.json({ error: `Failed to fetch parent product: ${parentRes.status}` }, { status: parentRes.status })
+    }
+
+    const parentProduct = await parentRes.json()
+
+    // Fetch variations
     const res = await fetch(`${apiUrl}/products/${productId}/variations?per_page=100`, {
       headers: {
         Authorization: `Basic ${credentials}`,
@@ -30,7 +45,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: `Failed to fetch variations: ${res.status}` }, { status: res.status })
     }
 
-    const variations = await res.json()
+    let variations = await res.json()
+
+    // Attach parent product data to each variation
+    variations = variations.map((variation: any) => ({
+      ...variation,
+      parent_data: parentProduct,
+    }))
 
     return NextResponse.json({ variations })
   } catch (error) {
