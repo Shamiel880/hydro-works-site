@@ -1,17 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Menu, X, Home, Store, Users, Phone, ShoppingCart, Wrench } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
-import { SmartSearch } from "./smart-search"
-import { usePathname } from "next/navigation"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Menu,
+  X,
+  Home,
+  Store,
+  Users,
+  Phone,
+  ShoppingCart,
+  Wrench,
+} from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { SmartSearch } from "./smart-search";
+import { usePathname } from "next/navigation";
+import { useCart } from "@/lib/cartContext";
 
 export function MobileMenu() {
-  const [isOpen, setIsOpen] = useState(false)
-  const pathname = usePathname()
+  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const { totalItems } = useCart();
 
   const menuItems = [
     { name: "Home", href: "/", icon: Home },
@@ -19,9 +30,9 @@ export function MobileMenu() {
     { name: "Store", href: "/store", icon: Store },
     { name: "About", href: "/about", icon: Users },
     { name: "Contact", href: "/contact", icon: Phone },
-  ]
+  ];
 
-  const closeMenu = () => setIsOpen(false)
+  const closeMenu = () => setIsOpen(false);
 
   return (
     <>
@@ -29,13 +40,13 @@ export function MobileMenu() {
       <Button
         variant="ghost"
         size="icon"
-        className="md:hidden text-hydro-onyx hover:text-hydro-green"
+        className="md:hidden text-hydro-onyx hover:text-hydro-green relative"
         onClick={() => setIsOpen(true)}
       >
         <Menu className="h-6 w-6" />
       </Button>
 
-      {/* Menu Drawer + Backdrop */}
+      {/* Drawer + Backdrop */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -48,7 +59,7 @@ export function MobileMenu() {
               onClick={closeMenu}
             />
 
-            {/* Slide-in Menu */}
+            {/* Slide-in Drawer */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -57,7 +68,7 @@ export function MobileMenu() {
               className="fixed top-0 right-0 h-full w-80 bg-hydro-white shadow-2xl z-50 md:hidden"
             >
               <div className="flex flex-col h-full">
-                {/* Header */}
+                {/* Drawer Header */}
                 <div className="flex items-center justify-between p-6 border-b border-hydro-green/10">
                   <div className="flex items-center space-x-3">
                     <Image
@@ -67,14 +78,21 @@ export function MobileMenu() {
                       height={40}
                       className="object-contain"
                     />
-                    <span className="font-semibold text-hydro-onyx">Hydro Works</span>
+                    <span className="font-semibold text-hydro-onyx">
+                      Hydro Works
+                    </span>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={closeMenu} className="text-hydro-onyx">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={closeMenu}
+                    className="text-hydro-onyx"
+                  >
                     <X className="h-6 w-6" />
                   </Button>
                 </div>
 
-                {/* Search */}
+                {/* Smart Search */}
                 <div className="p-6 border-b border-hydro-green/10">
                   <SmartSearch onClose={closeMenu} />
                 </div>
@@ -88,7 +106,9 @@ export function MobileMenu() {
                           href={item.href}
                           onClick={closeMenu}
                           className={`flex items-center space-x-3 p-3 rounded-xl text-hydro-onyx hover:bg-hydro-mint/20 hover:text-hydro-green transition-colors ${
-                            pathname === item.href ? "bg-hydro-mint/30 text-hydro-green font-semibold" : ""
+                            pathname === item.href
+                              ? "bg-hydro-mint/30 text-hydro-green font-semibold"
+                              : ""
                           }`}
                         >
                           <item.icon className="h-5 w-5" />
@@ -99,15 +119,22 @@ export function MobileMenu() {
                   </ul>
                 </nav>
 
-                {/* Footer */}
+                {/* Footer with Cart */}
                 <div className="p-6 border-t border-hydro-green/10">
                   <Link href="/cart" onClick={closeMenu}>
-                    <Button className="w-full bg-hydro-green hover:bg-hydro-green/90 text-hydro-white">
+                    <Button className="w-full bg-hydro-green hover:bg-hydro-green/90 text-hydro-white relative">
                       <ShoppingCart className="h-4 w-4 mr-2" />
                       View Cart
+                      {totalItems > 0 && (
+                        <span className="absolute top-1 right-3 bg-white text-hydro-green text-xs font-bold px-1.5 py-0.5 rounded-full border border-hydro-green">
+                          {totalItems}
+                        </span>
+                      )}
                     </Button>
                   </Link>
-                  <p className="text-center text-sm text-hydro-onyx/60 mt-4">Cape Town, South Africa</p>
+                  <p className="text-center text-sm text-hydro-onyx/60 mt-4">
+                    Cape Town, South Africa
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -115,5 +142,5 @@ export function MobileMenu() {
         )}
       </AnimatePresence>
     </>
-  )
+  );
 }
