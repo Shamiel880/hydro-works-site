@@ -58,8 +58,8 @@ export default function CheckoutForm() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const matchedZone = shippingZones.find(zone =>
-      zone.zipCodes.some(rx => rx.test(billing.postcode))
+    const matchedZone = shippingZones.find((zone) =>
+      zone.zipCodes.some((rx) => rx.test(billing.postcode))
     );
     setShippingCost(matchedZone ? matchedZone.cost : 0);
   }, [billing.postcode]);
@@ -117,50 +117,145 @@ export default function CheckoutForm() {
     }
   }
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
-    setBilling(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    setBilling((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
   return (
-    <div className="min-h-screen bg-[rgba(201,255,191,0.25)] pt-20">
+    <div className="min-h-screen bg-[rgba(201,255,191,0.25)] pt-20 pb-32">
       <div className="container mx-auto py-12 px-4 max-w-4xl">
-        <Card className="border border-hydro-green/30 rounded-2xl">
-          <CardContent className="p-6 grid md:grid-cols-2 gap-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <h2 className="text-2xl font-semibold text-hydro-onyx">Checkout</h2>
+        <Card className="border border-hydro-green/30 rounded-2xl shadow-lg">
+          <CardContent className="p-8 grid md:grid-cols-2 gap-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <h2 className="text-2xl font-semibold text-hydro-onyx">
+                Checkout
+              </h2>
               <div className="grid grid-cols-1 gap-4">
-                <input required name="first_name" placeholder="First Name" value={billing.first_name} onChange={handleChange} className="input" />
-                <input required name="last_name" placeholder="Last Name" value={billing.last_name} onChange={handleChange} className="input" />
-                <input name="company" placeholder="Company (optional)" value={billing.company} onChange={handleChange} className="input" />
-                <input required name="address_1" placeholder="Address Line 1" value={billing.address_1} onChange={handleChange} className="input" />
-                <input name="address_2" placeholder="Address Line 2" value={billing.address_2} onChange={handleChange} className="input" />
-                <input required name="city" placeholder="City" value={billing.city} onChange={handleChange} className="input" />
-                <select required name="state" value={billing.state} onChange={handleChange} className="input">
+                <input
+                  required
+                  name="first_name"
+                  placeholder="First Name"
+                  value={billing.first_name}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
+                />
+                <input
+                  required
+                  name="last_name"
+                  placeholder="Last Name"
+                  value={billing.last_name}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
+                />
+                <input
+                  name="company"
+                  placeholder="Company (optional)"
+                  value={billing.company}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
+                />
+                <input
+                  required
+                  name="address_1"
+                  placeholder="Address Line 1"
+                  value={billing.address_1}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
+                />
+                <input
+                  name="address_2"
+                  placeholder="Address Line 2"
+                  value={billing.address_2}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
+                />
+                <input
+                  required
+                  name="city"
+                  placeholder="City"
+                  value={billing.city}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
+                />
+                <select
+                  required
+                  name="state"
+                  value={billing.state}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green bg-white"
+                >
                   <option value="">Select Province</option>
                   {provinces.map((prov) => (
-                    <option key={prov} value={prov}>{prov}</option>
+                    <option key={prov} value={prov}>
+                      {prov}
+                    </option>
                   ))}
                 </select>
-                <input required name="postcode" placeholder="Postal Code" value={billing.postcode} onChange={handleChange} className="input" />
-                <input name="country" value="South Africa" disabled className="input bg-gray-100 cursor-not-allowed" />
-                <input required type="email" name="email" placeholder="Email" value={billing.email} onChange={handleChange} className="input" />
-                <input required name="phone" placeholder="Phone" value={billing.phone} onChange={handleChange} className="input" />
+                <input
+                  required
+                  name="postcode"
+                  placeholder="Postal Code"
+                  value={billing.postcode}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
+                />
+                <input
+                  name="country"
+                  value="South Africa"
+                  disabled
+                  className="w-full p-2 border border-gray-200 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
+                />
+                <input
+                  required
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  value={billing.email}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
+                />
+                <input
+                  required
+                  name="phone"
+                  placeholder="Phone"
+                  value={billing.phone}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
+                />
               </div>
-              <div className="text-hydro-green font-medium">
-                Shipping: R{shippingCost.toFixed(2)}<br />
+
+              <div className="text-hydro-green font-medium pt-4">
+                Shipping: R{shippingCost.toFixed(2)} <br />
                 Total: R{(totalPrice + shippingCost).toFixed(2)}
               </div>
-              {error && <p className="text-red-600">{error}</p>}
-              <button type="submit" disabled={loading} className="w-full bg-hydro-green text-white py-2 rounded hover:bg-opacity-90 disabled:opacity-50">
+
+              {error && (
+                <p className="text-red-600 bg-red-100 border border-red-300 rounded px-4 py-2">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-hydro-green text-white py-3 rounded-md font-semibold hover:bg-opacity-90 disabled:opacity-50 transition"
+              >
                 {loading ? "Placing order..." : "Place Order"}
               </button>
             </form>
 
-            <div>
-              <h3 className="text-lg font-semibold mb-4 text-hydro-onyx">Your Cart</h3>
+            <div className="self-start pt-[2.75rem]">
+              <h3 className="text-lg font-semibold mb-4 text-hydro-onyx">
+                Your Cart
+              </h3>
               <ul className="space-y-4">
                 {cart.map(({ product, quantity }) => (
-                  <li key={product.id} className="flex justify-between border-b border-hydro-green/20 pb-2">
+                  <li
+                    key={product.id}
+                    className="flex justify-between border-b border-hydro-green/20 pb-2"
+                  >
                     <span>{product.displayName}</span>
                     <span>
                       {quantity} × R{Number(product.price).toFixed(2)}
