@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,11 +10,67 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 
 export function Footer() {
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    message: "",
+    phone: "",
+    company: "",
+    inquiryType: "",
+    subject: "Website Footer Contact",
+    budget: "",
+    timeline: "",
+  })
+
+  const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+    setSubmitted(false)
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+
+      if (!res.ok) throw new Error("Failed to send message")
+      setSubmitted(true)
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        message: "",
+        phone: "",
+        company: "",
+        inquiryType: "",
+        subject: "Website Footer Contact",
+        budget: "",
+        timeline: "",
+      })
+    } catch (err) {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <footer className="bg-hydro-onyx text-hydro-white">
       <div className="container py-20 max-w-7xl mx-auto px-4">
         <div className="grid gap-12 lg:grid-cols-2">
-          {/* Left Section: Logo + About + Contact Info */}
+          {/* Left Section */}
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -64,7 +121,7 @@ export function Footer() {
             </div>
           </motion.div>
 
-          {/* Right Section: Contact Form + Navigation Links */}
+          {/* Right Section: Contact Form */}
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -72,30 +129,61 @@ export function Footer() {
             viewport={{ once: true }}
           >
             <h3 className="text-2xl font-bold mb-6">Get In Touch</h3>
-            <form className="space-y-4 max-w-md">
+
+            <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
               <div className="grid grid-cols-2 gap-4">
                 <Input
+                  name="firstName"
                   placeholder="First Name"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
                   className="bg-hydro-white/10 border border-hydro-white/20 text-hydro-white placeholder:text-hydro-white/60"
                 />
                 <Input
+                  name="lastName"
                   placeholder="Last Name"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
                   className="bg-hydro-white/10 border border-hydro-white/20 text-hydro-white placeholder:text-hydro-white/60"
                 />
               </div>
+
               <Input
                 type="email"
+                name="email"
                 placeholder="Email Address"
+                value={formData.email}
+                onChange={handleChange}
+                required
                 className="bg-hydro-white/10 border border-hydro-white/20 text-hydro-white placeholder:text-hydro-white/60"
               />
+
               <Textarea
+                name="message"
                 placeholder="Tell us about your growing needs..."
+                value={formData.message}
+                onChange={handleChange}
                 rows={4}
+                required
                 className="bg-hydro-white/10 border border-hydro-white/20 text-hydro-white placeholder:text-hydro-white/60"
               />
-              <Button className="w-full bg-hydro-green hover:bg-hydro-green/90 text-hydro-white">
-                Send Message
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-hydro-green hover:bg-hydro-green/90 text-hydro-white"
+              >
+                {loading ? "Sending..." : "Send Message"}
               </Button>
+
+              {submitted && (
+                <p className="text-sm text-green-400 mt-2">Your message has been sent successfully.</p>
+              )}
+              {error && (
+                <p className="text-sm text-red-400 mt-2">{error}</p>
+              )}
             </form>
 
             {/* Footer Links Below Form */}
@@ -143,7 +231,6 @@ export function Footer() {
                       Contact
                     </Link>
                   </li>
-                  {/* Blog and Support removed as requested */}
                 </ul>
               </div>
             </div>
@@ -151,7 +238,7 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Legal Links and Copyright */}
+      {/* Legal */}
       <div className="border-t border-hydro-white/10 py-6">
         <div className="container max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between text-sm text-hydro-white/70 gap-4">
           <p>&copy; {new Date().getFullYear()} Hydro Works. All rights reserved.</p>
