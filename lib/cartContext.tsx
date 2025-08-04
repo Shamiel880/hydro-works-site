@@ -88,24 +88,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
     
       const attributeValues = getAttributeValues()
+      const displayName =
+      parentProduct?.name &&
+      attributeValues &&
+      parentProduct.name !== attributeValues
+        ? `${parentProduct.name} - ${attributeValues}`
+        : parentProduct?.name || product.name;
     
-      productToAdd = {
-        ...productToAdd,
-        displayName: parentProduct
-          ? `${parentProduct.name}${attributeValues ? ` - ${attributeValues}` : ""}`
-          : `${product.name}${attributeValues ? ` - ${attributeValues}` : ""}`, // fallback for production
-        images: productToAdd.images?.length
-          ? productToAdd.images
-          : parentProduct?.images || [],
-        parent_data: parentProduct
-          ? {
-              id: parentProduct.id,
-              name: parentProduct.name,
-              slug: parentProduct.slug,
-              images: parentProduct.images,
-            }
-          : undefined,
-      }
+    productToAdd = {
+      ...productToAdd,
+      displayName,
+      images: productToAdd.images?.length
+        ? productToAdd.images
+        : parentProduct?.images || [],
+      parent_data: parentProduct
+        ? {
+            id: parentProduct.id,
+            name: parentProduct.name,
+            slug: parentProduct.slug,
+            images: parentProduct.images,
+          }
+        : undefined,
+    };    
+      
     }
   
     const { description, short_description, ...cleanProduct } = productToAdd
