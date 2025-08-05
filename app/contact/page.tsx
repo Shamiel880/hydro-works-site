@@ -37,16 +37,22 @@ const contactMethods = [
     title: "Phone Support",
     description: "Speak directly with our experts",
     contact: "+27 79 321 5597",
-    availability: "Mon-Fri: 8AM-4PM",
+    availability: "Mon–Fri: 8AM–4PM",
     action: "Call Now",
+    onClick: () => {
+      window.location.href = "tel:+27793215597";
+    },
   },
   {
     icon: MessageCircle,
     title: "WhatsApp",
     description: "Quick responses via WhatsApp",
     contact: "+27 79 321 5597",
-    availability: "Mon-Sun: 8AM-4PM",
+    availability: "Mon–Sun: 8AM–4PM",
     action: "Chat Now",
+    onClick: () => {
+      window.open("https://wa.me/27793215597", "_blank");
+    },
   },
   {
     icon: Mail,
@@ -55,16 +61,23 @@ const contactMethods = [
     contact: "info@hydroworks.co.za",
     availability: "Response within 4 hours",
     action: "Send Email",
+    onClick: () => {
+      window.location.href = "mailto:info@hydroworks.co.za";
+    },
   },
   {
     icon: Calendar,
     title: "Schedule Consultation",
     description: "Book a personalized consultation",
-    contact: "Let's plan your next project",
+    contact: "Let’s plan your next project",
     availability: "Available weekdays",
     action: "Book Now",
+    onClick: () => {
+      window.open("https://calendly.com/hydroworks" /* replace with actual link */, "_blank");
+    },
   },
 ];
+
 
 const officeLocations = [
   {
