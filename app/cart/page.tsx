@@ -120,26 +120,43 @@ export default function CartPage() {
                           <div className="text-hydro-green font-bold mt-1">
                             R {Number(product.price).toFixed(2)}
                           </div>
+
                           <div className="mt-2 flex items-center gap-2">
-                            <label
-                              htmlFor={`qty-${product.id}`}
-                              className="text-sm text-hydro-onyx/70"
-                            >
+                            <span className="text-sm text-hydro-onyx/70">
                               Qty:
-                            </label>
-                            <input
-                              id={`qty-${product.id}`}
-                              type="number"
-                              min={1}
-                              value={quantity}
-                              onChange={(e) =>
-                                handleQuantityChange(
-                                  product.id,
-                                  Number(e.target.value)
-                                )
-                              }
-                              className="w-16 border border-hydro-green/40 rounded px-2 py-1"
-                            />
+                            </span>
+                            <div className="flex items-center border border-hydro-green/40 rounded overflow-hidden">
+                              <button
+                                className="px-2 py-1 text-hydro-onyx hover:text-hydro-green"
+                                onClick={() =>
+                                  handleQuantityChange(product.id, quantity - 1)
+                                }
+                                disabled={quantity <= 1}
+                              >
+                                −
+                              </button>
+                              <input
+                                id={`qty-${product.id}`}
+                                type="number"
+                                min={1}
+                                value={quantity}
+                                onChange={(e) =>
+                                  handleQuantityChange(
+                                    product.id,
+                                    Number(e.target.value)
+                                  )
+                                }
+                                className="w-12 text-center text-hydro-onyx bg-white outline-none"
+                              />
+                              <button
+                                className="px-2 py-1 text-hydro-onyx hover:text-hydro-green"
+                                onClick={() =>
+                                  handleQuantityChange(product.id, quantity + 1)
+                                }
+                              >
+                                +
+                              </button>
+                            </div>
                           </div>
                         </div>
                         <Button
