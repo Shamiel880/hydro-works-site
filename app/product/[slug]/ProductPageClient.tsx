@@ -3,7 +3,17 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, Star, ArrowLeft, Heart, Share2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import {
+  ShoppingCart,
+  Star,
+  ArrowLeft,
+  Heart,
+  Share2,
+  ChevronRight,
+  Minus,
+  Plus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,16 +29,10 @@ interface Props {
   product: WooCommerceProduct;
 }
 
-function decodeHTMLEntities(text: string): string {
-  if (typeof window === "undefined") return text;
-  const textarea = document.createElement("textarea");
-  textarea.innerHTML = text;
-  return textarea.value;
-}
-
 export default function ProductPageClient({ product }: Props) {
   const { addToCart } = useCart();
   const isVariable = product.type === "variable";
+
   const [selectedVariation, setSelectedVariation] =
     useState<WooCommerceVariation | null>(null);
   const [selectedAttributes, setSelectedAttributes] = useState<
@@ -38,6 +42,17 @@ export default function ProductPageClient({ product }: Props) {
     product.images?.[0]?.src || "/placeholder.svg"
   );
   const [cleanPriceHtml, setCleanPriceHtml] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
+
+  const searchParams = useSearchParams();
+  const queryString = searchParams.toString();
+  const backLink = `/store${queryString ? `?${queryString}` : ""}`;
+
+  const currentCategory = product.categories?.[0]?.name;
+  const currentCategoryLink = product.categories?.[0]?.id
+    ? `/store?category=${product.categories[0].id}`
+    : "/store";
 
   useEffect(() => {
     if (!isVariable || !product.variation_data) return;
@@ -102,13 +117,26 @@ export default function ProductPageClient({ product }: Props) {
 
   const isInStock = () => {
     if (!product.purchasable) return false;
-
     if (isVariable) {
       return selectedVariation?.stock_status === "instock";
     }
-
     return product.stock_status === "instock";
   };
+
+  const handleAddToCart = async () => {
+    setIsAdding(true)
+    try {
+      await addToCart(selectedVariation || product, quantity)
+      // 🔥 Do NOT trigger another toast here
+    } catch (e) {
+      toast.error("Failed to add to cart.")
+    } finally {
+      setIsAdding(false)
+    }
+  }
+
+  const incrementQty = () => setQuantity((q) => Math.min(q + 1, 99));
+  const decrementQty = () => setQuantity((q) => Math.max(q - 1, 1));
 
   return (
     <div className="min-h-screen bg-hydro-white">
@@ -116,20 +144,34 @@ export default function ProductPageClient({ product }: Props) {
 
       <div className="pt-24">
         <div className="container py-8">
-          <div className="mb-6">
-            <Button
-              variant="ghost"
-              asChild
-              className="text-hydro-onyx hover:text-hydro-green"
-            >
-              <Link href="/store">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Store
-              </Link>
-            </Button>
+          {/* Breadcrumbs */}
+          <div className="mb-4 flex items-center gap-2 text-sm text-hydro-onyx/60 flex-wrap">
+            <Link href="/" className="hover:text-hydro-green transition">
+              Home
+            </Link>
+            <ChevronRight className="h-4 w-4" />
+            <Link href="/store" className="hover:text-hydro-green transition">
+              Store
+            </Link>
+            {currentCategory && (
+              <>
+                <ChevronRight className="h-4 w-4" />
+                <Link
+                  href={currentCategoryLink}
+                  className="hover:text-hydro-green transition"
+                >
+                  {currentCategory}
+                </Link>
+              </>
+            )}
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-hydro-onyx font-medium truncate">
+              {product.name}
+            </span>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12">
+            {/* Product Image(s) */}
             <div className="space-y-4">
               <div className="overflow-hidden rounded-2xl bg-white aspect-square flex items-center justify-center">
                 <Image
@@ -163,6 +205,7 @@ export default function ProductPageClient({ product }: Props) {
               )}
             </div>
 
+            {/* Product Details */}
             <Card className="border-hydro-green/10 rounded-2xl shadow-sm bg-hydro-mint/25">
               <CardContent className="p-6 space-y-6">
                 <div className="flex items-center justify-between">
@@ -193,38 +236,28 @@ export default function ProductPageClient({ product }: Props) {
                   {product.name}
                 </h1>
 
-                {product.average_rating &&
-                  Number.parseFloat(product.average_rating) > 0 && (
-                    <div className="flex items-center gap-2">
-                      <div className="flex">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-5 w-5 ${
-                              i <
-                              Math.floor(
-                                Number.parseFloat(product.average_rating)
-                              )
-                                ? "text-yellow-400 fill-current"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-hydro-onyx/70">
-                        {product.average_rating} ({product.rating_count}{" "}
-                        reviews)
-                      </span>
+                {product.average_rating && Number(product.average_rating) > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-5 w-5 ${
+                            i < Math.floor(Number(product.average_rating))
+                              ? "text-yellow-400 fill-current"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
                     </div>
-                  )}
-
-                <div className="flex items-center gap-4">
-                  <div className="text-3xl font-bold text-hydro-green">
-                    {cleanPriceHtml}
+                    <span className="text-hydro-onyx/70">
+                      {product.average_rating} ({product.rating_count} reviews)
+                    </span>
                   </div>
-                  {product.on_sale && !isVariable && (
-                    <Badge className="bg-red-500 text-white">Sale</Badge>
-                  )}
+                )}
+
+                <div className="text-3xl font-bold text-hydro-green">
+                  {cleanPriceHtml}
                 </div>
 
                 {isVariable &&
@@ -259,63 +292,67 @@ export default function ProductPageClient({ product }: Props) {
                   />
                 )}
 
+                {/* Quantity and Add to Cart */}
                 <div className="space-y-4">
-                  {product.purchasable &&
-                  product.stock_status === "instock" &&
-                  (!isVariable || selectedVariation) ? (
-                    <Button
-                      size="lg"
-                      className="w-full bg-hydro-green text-white hover:bg-hydro-green/90"
-                      onClick={() => {
-                        addToCart(selectedVariation || product, 1);
-                      }}
-                    >
-                      <ShoppingCart className="h-5 w-5 mr-2" />
-                      Add to Cart
-                    </Button>
-                  ) : (
-                    <Button size="lg" disabled className="w-full">
-                      Out of Stock
-                    </Button>
-                  )}
-                </div>
-
-                {product.attributes?.length > 0 && (
-                  <div className="pt-4">
-                    <h3 className="font-semibold text-hydro-onyx mb-2">
-                      Product Features
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      {product.attributes.map((attribute, index) => (
-                        <div key={index} className="flex justify-between">
-                          <span className="text-hydro-onyx/70">
-                            {attribute.name}:
-                          </span>
-                          <span className="text-hydro-onyx font-medium">
-                            {attribute.options.join(", ")}
-                          </span>
-                        </div>
-                      ))}
+                  <div className="flex items-center gap-4">
+                    <span className="text-hydro-onyx">Qty:</span>
+                    <div className="flex items-center rounded-lg overflow-hidden border border-hydro-green/30">
+                      <button
+                        type="button"
+                        onClick={decrementQty}
+                        className="p-2 hover:bg-hydro-green/10"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <input
+                        type="number"
+                        value={quantity}
+                        readOnly
+                        className="w-12 text-center bg-transparent text-hydro-onyx outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={incrementQty}
+                        className="p-2 hover:bg-hydro-green/10"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                )}
+
+                  <Button
+                    size="lg"
+                    disabled={!isInStock() || isAdding}
+                    className="w-full bg-hydro-green text-white hover:bg-hydro-green/90"
+                    onClick={handleAddToCart}
+                  >
+                    {isAdding ? (
+                      <>
+                        <ShoppingCart className="h-5 w-5 mr-2 animate-spin" />
+                        Adding...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="h-5 w-5 mr-2" />
+                        Add to Cart
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
 
+          {/* Full Product Description */}
           {product.description && (
-            <div className="mt-16">
-              <Card className="border-hydro-green/10 rounded-2xl shadow-sm bg-hydro-mint/25">
-                <CardContent className="p-8">
-                  <h2 className="text-2xl font-bold text-hydro-onyx mb-6">
-                    Product Description
-                  </h2>
-                  <div
-                    className="prose prose-lg max-w-none text-hydro-onyx/80"
-                    dangerouslySetInnerHTML={{ __html: product.description }}
-                  />
-                </CardContent>
-              </Card>
+            <div className="mt-12 prose prose-hydro max-w-none">
+              <h2 className="text-2xl font-semibold text-hydro-onyx mb-4">
+                Product Description
+              </h2>
+              <div
+                className="text-hydro-onyx/90"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
             </div>
           )}
         </div>

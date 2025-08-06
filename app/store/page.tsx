@@ -1,133 +1,164 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Search,
-  Filter,
-  ShoppingCart,
-  Star,
-  Loader2,
-  Grid3X3,
-  List,
-  SlidersHorizontal,
-  ArrowUpDown,
-} from "lucide-react"
-import Link from "next/link"
-import ProductCard from "@/components/productcard"
-import type { WooCommerceProduct, WooCommerceCategory, ProductsResponse } from "@/types/woocommerce"
-import { AnimatedHeader } from "@/components/animated-header"
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Loader2, Menu } from "lucide-react";
 
-function decodeHTMLEntities(text: string): string {
-  if (typeof window === "undefined") return text
-  const textarea = document.createElement("textarea")
-  textarea.innerHTML = text
-  return textarea.value
+import ProductCard from "@/components/productcard";
+import SidebarFilters from "@/components/sidebarfilters";
+import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { AnimatedHeader } from "@/components/animated-header";
+
+interface WooCommerceProduct {
+  id: number;
+  name: string;
+  price: string;
+  images: Array<{ src: string }>;
+  slug: string;
+}
+
+interface WooCommerceCategory {
+  id: number;
+  name: string;
+}
+
+interface ProductsResponse {
+  products: WooCommerceProduct[];
+  error?: string;
 }
 
 export default function StorePage() {
-  const [products, setProducts] = useState<WooCommerceProduct[]>([])
-  const [categories, setCategories] = useState<WooCommerceCategory[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("all")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalProducts, setTotalProducts] = useState(0)
-  const [sortBy, setSortBy] = useState("date")
-  const [priceRange, setPriceRange] = useState("all")
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const searchParam = urlParams.get("search")
-    if (searchParam) setSearchTerm(searchParam)
-  }, [])
+  const [products, setProducts] = useState<WooCommerceProduct[]>([]);
+  const [categories, setCategories] = useState<WooCommerceCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const loadingRef = useRef(false);
 
+  // Get current filter params
+  const searchTerm = searchParams.get("search") || "";
+  const selectedCategory = searchParams.get("category") || "all";
+  const sortBy = searchParams.get("sort") || "date";
+  const priceRange = searchParams.get("price") || "all";
+
+  // Update URL params without page reload
+  const updateURLParams = useCallback((params: Record<string, string | null>) => {
+    const current = new URLSearchParams(Array.from(searchParams.entries()));
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== "") current.set(key, value);
+      else current.delete(key);
+    });
+    router.push(`/store?${current.toString()}`, { scroll: false });
+  }, [searchParams, router]);
+
+  // Fetch categories once on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("/api/categories")
-        const data = await response.json()
-        if (response.ok) setCategories(data.categories)
-        else console.error("Failed to fetch categories:", data.error)
+        const response = await fetch("/api/categories");
+        if (!response.ok) throw new Error("Failed to fetch categories");
+        const data = await response.json();
+        setCategories(data.categories || []);
       } catch (error) {
-        console.error("Error fetching categories:", error)
+        console.error("Error fetching categories:", error);
       }
-    }
-    fetchCategories()
-  }, [])
+    };
+    fetchCategories();
+  }, []);
 
+  // Reset products and page when filters change
   useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const params = new URLSearchParams({
-          page: currentPage.toString(),
-          per_page: "24",
-          orderby: sortBy === "price-low" ? "price" : sortBy === "price-high" ? "price" : sortBy,
-          order: sortBy === "price-high" ? "desc" : "asc",
-        })
+    setProducts([]);
+    setPage(1);
+    setHasMore(true);
+    setInitialLoad(true);
+  }, [searchTerm, selectedCategory, sortBy, priceRange]);
 
-        if (selectedCategory && selectedCategory !== "all") {
-          params.append("category", selectedCategory)
-        }
+  // Infinite scroll fetch function
+  const fetchProducts = useCallback(async () => {
+    if (loadingRef.current || !hasMore) return;
+    
+    loadingRef.current = true;
+    setLoading(true);
 
-        if (searchTerm) {
-          params.append("search", searchTerm)
-        }
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: "12",
+        orderby: sortBy.includes("price") ? "price" : sortBy,
+        order: sortBy === "price-high" ? "desc" : "asc",
+      });
 
-        const response = await fetch(`/api/products?${params}`)
-        const data: ProductsResponse = await response.json()
+      if (selectedCategory !== "all") params.append("category", selectedCategory);
+      if (searchTerm) params.append("search", searchTerm);
 
-        if (response.ok) {
-          let filteredProducts = data.products
-
-          if (priceRange !== "all") {
-            filteredProducts = filteredProducts.filter((product) => {
-              const price = Number.parseFloat(product.price) || 0
-              switch (priceRange) {
-                case "under-500":
-                  return price < 500
-                case "500-2000":
-                  return price >= 500 && price <= 2000
-                case "2000-10000":
-                  return price >= 2000 && price <= 10000
-                case "over-10000":
-                  return price > 10000
-                default:
-                  return true
-              }
-            })
-          }
-
-          setProducts(filteredProducts)
-          setTotalPages(data.pagination.total_pages)
-          setTotalProducts(data.pagination.total_products)
-        } else {
-          setError(data.error || "Failed to fetch products")
-        }
-      } catch (error) {
-        setError("Network error: Unable to fetch products")
-        console.error("Error fetching products:", error)
-      } finally {
-        setLoading(false)
+      const response = await fetch(`/api/products?${params}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
       }
+
+      const data: ProductsResponse = await response.json();
+      const newProducts = data.products || [];
+
+      // Filter by price range
+      let filteredProducts = newProducts;
+      if (priceRange !== "all") {
+        filteredProducts = filteredProducts.filter((product) => {
+          const price = parseFloat(product.price) || 0;
+          switch (priceRange) {
+            case "under-500": return price < 500;
+            case "500-2000": return price >= 500 && price <= 2000;
+            case "2000-10000": return price >= 2000 && price <= 10000;
+            case "over-10000": return price > 10000;
+            default: return true;
+          }
+        });
+      }
+
+      setProducts(prev => [...prev, ...filteredProducts]);
+      setHasMore(newProducts.length > 0);
+      setPage(prev => prev + 1);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Unknown error occurred");
+    } finally {
+      setLoading(false);
+      loadingRef.current = false;
+      setInitialLoad(false);
     }
+  }, [page, searchTerm, selectedCategory, sortBy, priceRange, hasMore]);
 
-    fetchProducts()
-  }, [currentPage, selectedCategory, searchTerm, sortBy, priceRange])
+  // Initial load and filter changes
+  useEffect(() => {
+    if (initialLoad) {
+      fetchProducts();
+    }
+  }, [initialLoad, fetchProducts]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setCurrentPage(1)
-  }
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          fetchProducts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const sentinel = document.getElementById("sentinel");
+    if (sentinel) observer.observe(sentinel);
+
+    return () => {
+      if (sentinel) observer.unobserve(sentinel);
+    };
+  }, [loading, hasMore, fetchProducts]);
 
   return (
     <div className="min-h-screen bg-hydro-white">
@@ -147,211 +178,133 @@ export default function StorePage() {
               Store
             </h1>
             <p className="text-lg text-hydro-onyx/70 max-w-2xl mx-auto">
-              Discover our complete range of hydroponic systems, organic inputs, and growing solutions
+              Discover our complete range of hydroponic systems, organic inputs,
+              and growing solutions
             </p>
           </motion.div>
 
-          <motion.div
-            className="mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <Card className="border-hydro-green/20">
-              <CardContent className="p-6">
-                <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-hydro-onyx/50 h-4 w-4" />
-                    <Input
-                      type="text"
-                      placeholder="Search products..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 border-hydro-green/20 focus:border-hydro-green"
-                    />
-                  </div>
-                  <Button type="submit" className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white">
-                    Search
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+            {/* Mobile filters */}
+            <div className="block lg:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="text-hydro-onyx/80 border-hydro-green/20"
+                  >
+                    <Menu className="mr-2 h-4 w-4" />
+                    Filters
                   </Button>
-                </form>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-72 p-4 overflow-y-auto">
+                  <SidebarFilters
+                    categories={categories}
+                    selectedCategory={selectedCategory}
+                    priceRange={priceRange}
+                    sortBy={sortBy}
+                    searchTerm={searchTerm}
+                    updateURLParams={updateURLParams}
+                  />
+                </SheetContent>
+              </Sheet>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Filter className="text-hydro-onyx/50 h-4 w-4" />
-                    <Select value={selectedCategory} onValueChange={(val) => { setSelectedCategory(val); setCurrentPage(1) }}>
-                      <SelectTrigger className="border-hydro-green/20 focus:border-hydro-green">
-                        <SelectValue placeholder="Category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {categories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id.toString()}>
-                            {cat.name} ({cat.count})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+            {/* Desktop filters */}
+            <aside className="hidden lg:block sticky top-24 self-start bg-white border border-hydro-green/20 rounded-xl shadow p-6 max-h-[calc(100vh-6rem)] overflow-y-auto">
+              <SidebarFilters
+                categories={categories}
+                selectedCategory={selectedCategory}
+                priceRange={priceRange}
+                sortBy={sortBy}
+                searchTerm={searchTerm}
+                updateURLParams={updateURLParams}
+              />
+            </aside>
 
-                  <div className="flex items-center gap-2">
-                    <ArrowUpDown className="text-hydro-onyx/50 h-4 w-4" />
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="border-hydro-green/20 focus:border-hydro-green">
-                        <SelectValue placeholder="Sort by" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="date">Newest First</SelectItem>
-                        <SelectItem value="title">Name A-Z</SelectItem>
-                        <SelectItem value="price-low">Price: Low to High</SelectItem>
-                        <SelectItem value="price-high">Price: High to Low</SelectItem>
-                        <SelectItem value="popularity">Most Popular</SelectItem>
-                        <SelectItem value="rating">Highest Rated</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <SlidersHorizontal className="text-hydro-onyx/50 h-4 w-4" />
-                    <Select value={priceRange} onValueChange={setPriceRange}>
-                      <SelectTrigger className="border-hydro-green/20 focus:border-hydro-green">
-                        <SelectValue placeholder="Price Range" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Prices</SelectItem>
-                        <SelectItem value="under-500">Under R500</SelectItem>
-                        <SelectItem value="500-2000">R500 - R2,000</SelectItem>
-                        <SelectItem value="2000-10000">R2,000 - R10,000</SelectItem>
-                        <SelectItem value="over-10000">Over R10,000</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center justify-end">
+            {/* Main content */}
+            <div>
+              {initialLoad && loading ? (
+                <div className="flex justify-center items-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-hydro-green" />
+                  <span className="ml-2 text-hydro-onyx/70">
+                    Loading products...
+                  </span>
+                </div>
+              ) : error ? (
+                <div className="text-center py-20">
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-8 max-w-md mx-auto">
+                    <h3 className="text-lg font-semibold text-red-800 mb-2">
+                      Unable to Load Products
+                    </h3>
+                    <p className="text-red-600 mb-4">{error}</p>
                     <Button
+                      onClick={() => window.location.reload()}
                       variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSearchTerm("")
-                        setSelectedCategory("all")
-                        setSortBy("date")
-                        setPriceRange("all")
-                        setCurrentPage(1)
-                      }}
-                      className="border-hydro-green/20 text-hydro-onyx hover:bg-hydro-green hover:text-hydro-white"
+                      className="border-red-300 text-red-700 hover:bg-red-50"
                     >
-                      Clear All
+                      Try Again
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Product Grid */}
-          {!loading && !error && products.length > 0 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.3 }}>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-12">
-                {products.map((product, index) => (
-                  <ProductCard key={product.id} product={product} index={index} />
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {loading && (
-            <div className="flex justify-center items-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-hydro-green" />
-              <span className="ml-2 text-hydro-onyx/70">Loading products...</span>
+              ) : (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    {products.length > 0 ? (
+                      <>
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-12">
+                          {products.map((product) => (
+                            <ProductCard key={`${product.id}-${product.slug}`} product={product} />
+                          ))}
+                        </div>
+                        
+                        {/* Infinite scroll sentinel */}
+                        <div id="sentinel" className="h-10 flex justify-center">
+                          {loading && (
+                            <Loader2 className="h-6 w-6 animate-spin text-hydro-green" />
+                          )}
+                          {!hasMore && products.length > 0 && (
+                            <p className="text-hydro-onyx/70 text-sm">
+                              No more products to load
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-20">
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 max-w-md mx-auto">
+                          <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                            No Products Found
+                          </h3>
+                          <p className="text-yellow-600 mb-4">
+                            Try adjusting your search or filter criteria
+                          </p>
+                          <Button
+                            onClick={() => updateURLParams({
+                              search: null,
+                              category: null,
+                              sort: null,
+                              price: null,
+                              page: "1",
+                            })}
+                            variant="outline"
+                            className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                          >
+                            Clear Filters
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                </>
+              )}
             </div>
-          )}
-
-          {error && (
-            <motion.div className="text-center py-20" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-8 max-w-md mx-auto">
-                <h3 className="text-lg font-semibold text-red-800 mb-2">Unable to Load Products</h3>
-                <p className="text-red-600 mb-4">{error}</p>
-                <Button
-                  onClick={() => window.location.reload()}
-                  variant="outline"
-                  className="border-red-300 text-red-700 hover:bg-red-50"
-                >
-                  Try Again
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {!loading && !error && products.length === 0 && (
-            <motion.div className="text-center py-20" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="bg-hydro-mint/20 border border-hydro-green/20 rounded-2xl p-8 max-w-md mx-auto">
-                <ShoppingCart className="h-12 w-12 text-hydro-green/50 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-hydro-onyx mb-2">No Products Found</h3>
-                <p className="text-hydro-onyx/70 mb-4">Try adjusting your search or filter criteria</p>
-                <Button
-                  onClick={() => {
-                    setSearchTerm("")
-                    setSelectedCategory("all")
-                    setSortBy("date")
-                    setPriceRange("all")
-                    setCurrentPage(1)
-                  }}
-                  className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white"
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Pagination */}
-          {!loading && !error && totalPages > 1 && (
-            <motion.div
-              className="flex justify-center items-center gap-2 mt-12"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.5 }}
-            >
-              <Button
-                variant="outline"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(currentPage - 1)}
-                className="border-hydro-green/20 text-hydro-onyx hover:bg-hydro-green hover:text-hydro-white"
-              >
-                Previous
-              </Button>
-
-              <div className="flex gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNum = i + 1
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={currentPage === pageNum ? "default" : "outline"}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={
-                        currentPage === pageNum
-                          ? "bg-hydro-green hover:bg-hydro-green/90 text-hydro-white"
-                          : "border-hydro-green/20 text-hydro-onyx hover:bg-hydro-green hover:text-hydro-white"
-                      }
-                    >
-                      {pageNum}
-                    </Button>
-                  )
-                })}
-              </div>
-
-              <Button
-                variant="outline"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(currentPage + 1)}
-                className="border-hydro-green/20 text-hydro-onyx hover:bg-hydro-green hover:text-hydro-white"
-              >
-                Next
-              </Button>
-            </motion.div>
-          )}
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
