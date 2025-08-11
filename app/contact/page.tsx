@@ -25,6 +25,9 @@ import {
   HelpCircle,
   ShoppingCart,
   Calendar,
+  Twitter,
+  Facebook,
+  Instagram,
 } from "lucide-react";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -208,9 +211,9 @@ export default function ContactPage() {
           </div>
         </section>
 
-        {/* Contact Methods */}
+        {/* Contact Methods Section */}
         <section className="py-20">
-          <div className="container">
+          <div className="container mx-auto px-4">
             <motion.div
               className="text-center mb-16"
               initial={{ opacity: 0, y: 30 }}
@@ -236,10 +239,13 @@ export default function ContactPage() {
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                   viewport={{ once: true }}
                 >
-                  <Card className="h-full border-hydro-green/20 hover:border-hydro-green/40 transition-all duration-300 hover:shadow-lg cursor-pointer group">
+                  <Card className="h-full border border-hydro-green/20 hover:border-hydro-green/40 transition-all duration-300 hover:shadow-lg cursor-pointer group rounded-lg">
                     <CardContent className="p-6 text-center">
                       <div className="h-12 w-12 rounded-xl bg-hydro-green/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-hydro-green/20 transition-colors">
-                        <method.icon className="h-6 w-6 text-hydro-green" />
+                        <method.icon
+                          className="h-6 w-6 text-hydro-green"
+                          aria-hidden="true"
+                        />
                       </div>
                       <h3 className="font-semibold text-hydro-onyx mb-2">
                         {method.title}
@@ -254,8 +260,9 @@ export default function ContactPage() {
                         {method.availability}
                       </p>
                       <Button
+                        type="button"
                         size="sm"
-                        className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white"
+                        className="bg-hydro-green hover:bg-hydro-green/90 focus:ring-4 focus:ring-hydro-green/50 text-hydro-white transition-colors rounded-md px-4 py-2"
                       >
                         {method.action}
                       </Button>
@@ -267,6 +274,65 @@ export default function ContactPage() {
           </div>
         </section>
 
+        {/* Socials Section */}
+        <section className="py-20 bg-hydro-onyx/5">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl font-bold text-hydro-onyx sm:text-4xl mb-4">
+                Connect with Us on Social Media
+              </h2>
+              <p className="text-lg text-hydro-onyx/70 max-w-2xl mx-auto">
+                Stay updated with the latest news and grow tips.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6"
+            >
+              <a
+                href="https://www.instagram.com/hydroworks_ct"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="inline-flex items-center gap-2 bg-hydro-green hover:bg-hydro-green/90 focus:ring-4 focus:ring-hydro-green/50 text-hydro-white rounded-md px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base transition-colors"
+              >
+                <Instagram className="h-5 w-5 sm:h-6 sm:w-6" />
+                Instagram
+              </a>
+              <a
+                href="https://www.facebook.com/p/Hydroworks-100054811538147/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="inline-flex items-center gap-2 bg-hydro-green hover:bg-hydro-green/90 focus:ring-4 focus:ring-hydro-green/50 text-hydro-white rounded-md px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base transition-colors"
+              >
+                <Facebook className="h-5 w-5 sm:h-6 sm:w-6" />
+                Facebook
+              </a>
+              <a
+                href="https://twitter.com/Hydro_Works_ZA"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Twitter"
+                className="inline-flex items-center gap-2 bg-hydro-green hover:bg-hydro-green/90 focus:ring-4 focus:ring-hydro-green/50 text-hydro-white rounded-md px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base transition-colors"
+              >
+                <Twitter className="h-5 w-5 sm:h-6 sm:w-6" />
+                Twitter
+              </a>
+            </motion.div>
+          </div>
+        </section>
+        
         {/* Contact Form */}
         <section className="py-20 bg-hydro-mint/10">
           <div className="container">

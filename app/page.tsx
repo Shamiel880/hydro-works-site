@@ -221,7 +221,7 @@ export default function HomePage() {
                   transition={{ type: "spring", stiffness: 300 }}
                 >
                   <div className="text-2xl font-bold text-hydro-green mb-1">
-                    500+
+                    300+
                   </div>
                   <div className="text-sm text-hydro-onyx/70">
                     Active Growers
