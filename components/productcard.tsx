@@ -1,14 +1,15 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import { ShoppingCart } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
 import type { WooCommerceProduct } from "@/types/woocommerce"
-import { useCart } from "@/lib/cartContext" // ✅ Use cart hook
+import { useCart } from "@/lib/cartContext"
 
 interface ProductCardProps {
   product: WooCommerceProduct
@@ -19,20 +20,37 @@ export default function ProductCard({ product, index }: ProductCardProps) {
   const imageUrl = product.images?.[0]?.src ?? "/placeholder.png"
   const inStock = product.stock_status === "instock"
   const category = product.categories?.[0]?.name
-  const isPurchasable =
-    product.type === "simple" && product.purchasable && inStock
+  const isPurchasable = product.type === "simple" && product.purchasable && inStock
 
-  const { addToCart } = useCart() // ✅ Access addToCart from context
+  const { addToCart } = useCart()
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const productUrl = `/product/${product.slug}`
+
+  // Prefetch product page when component mounts
+  useEffect(() => {
+    router.prefetch(productUrl)
+  }, [router, productUrl])
+
+  const handleNavigation = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    router.push(productUrl)
+  }
 
   return (
     <motion.div
-      className="w-full h-full"
+      className="w-full h-full relative"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: index * 0.1 }}
       viewport={{ once: true, margin: "-50px" }}
     >
-      <Link href={`/product/${product.slug}`} className="group block h-full">
+      <a
+        href={productUrl}
+        onClick={handleNavigation}
+        className="group block h-full"
+      >
         <Card className="rounded-2xl overflow-hidden shadow-sm hover:bg-white relative h-full border-0">
           {/* Image Section */}
           <div className="aspect-square bg-white relative overflow-hidden">
@@ -75,7 +93,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
             </p>
           </CardContent>
 
-          {/* Subtle Add-to-Cart Hover Button */}
+          {/* Add-to-Cart Hover Button */}
           {isPurchasable && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300">
               <Button
@@ -92,8 +110,15 @@ export default function ProductCard({ product, index }: ProductCardProps) {
               </Button>
             </div>
           )}
+
+          {/* Loading Overlay */}
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+              <div className="w-6 h-6 border-2 border-hydro-green border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
         </Card>
-      </Link>
+      </a>
     </motion.div>
   )
 }
