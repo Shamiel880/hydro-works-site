@@ -18,6 +18,15 @@ interface BillingShipping {
   phone: string;
 }
 
+interface OrderSummary {
+  order_id: number;
+  line_items: { name: string; quantity: number; price: number }[];
+  total: number;
+  shipping: number;
+  customer_name: string;
+  customer_email: string;
+}
+
 const provinces = [
   "Eastern Cape",
   "Free State",
@@ -37,7 +46,7 @@ const shippingZones = [
 ];
 
 export default function CheckoutForm() {
-  const { cart, totalPrice } = useCart();
+  const { cart, totalPrice, clearCart } = useCart();
 
   const [billing, setBilling] = useState<BillingShipping>({
     first_name: "",
@@ -56,6 +65,8 @@ export default function CheckoutForm() {
   const [shippingCost, setShippingCost] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
 
   useEffect(() => {
     const matchedZone = shippingZones.find((zone) =>
@@ -64,7 +75,13 @@ export default function CheckoutForm() {
     setShippingCost(matchedZone ? matchedZone.cost : 0);
   }, [billing.postcode]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setBilling((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -75,7 +92,7 @@ export default function CheckoutForm() {
       return;
     }
 
-    const lineItems = cart.map(({ product, quantity }) => ({
+    const lineItemsPayload = cart.map(({ product, quantity }) => ({
       product_id: product.id,
       quantity,
     }));
@@ -86,7 +103,7 @@ export default function CheckoutForm() {
       set_paid: false,
       billing,
       shipping: billing,
-      line_items: lineItems,
+      line_items: lineItemsPayload,
       shipping_lines: [
         {
           method_id: "flat_rate",
@@ -106,7 +123,23 @@ export default function CheckoutForm() {
       const data = await res.json();
 
       if (data.success) {
-        window.location.href = data.order.payment_url;
+        // Prepare summary for display
+        const summary: OrderSummary = {
+          order_id: data.order.id,
+          line_items: cart.map(({ product, quantity }) => ({
+            name: product.displayName,
+            quantity,
+            price: Number(product.price),
+          })),
+          total: totalPrice + shippingCost,
+          shipping: shippingCost,
+          customer_name: `${billing.first_name} ${billing.last_name}`,
+          customer_email: billing.email,
+        };
+
+        setOrderSummary(summary);
+        setSubmitted(true);
+        clearCart();
       } else {
         setError(data.message || "Order submission failed");
       }
@@ -115,12 +148,42 @@ export default function CheckoutForm() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) {
-    setBilling((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  if (submitted && orderSummary) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[rgba(201,255,191,0.25)] pt-20 pb-32">
+        <div className="container max-w-lg">
+          <Card className="border border-hydro-green/30 rounded-2xl shadow-lg p-8">
+            <h2 className="text-2xl font-semibold text-hydro-onyx mb-4">
+              Thank you, {orderSummary.customer_name}!
+            </h2>
+            <p className="text-hydro-onyx/80 mb-4">
+              Your order <span className="font-medium">#{orderSummary.order_id}</span> has been received and is pending confirmation.
+            </p>
+
+            <h3 className="text-lg font-semibold text-hydro-onyx mb-2">Order Summary</h3>
+            <ul className="mb-4 border-b border-hydro-green/20 pb-2">
+              {orderSummary.line_items.map((item, idx) => (
+                <li key={idx} className="flex justify-between mb-1">
+                  <span>{item.name} × {item.quantity}</span>
+                  <span>R{(item.price * item.quantity).toFixed(2)}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="text-hydro-onyx/80 mb-2">
+              Shipping: R{orderSummary.shipping.toFixed(2)}
+            </div>
+            <div className="text-hydro-green font-bold text-lg mb-4">
+              Total: R{orderSummary.total.toFixed(2)}
+            </div>
+            <p className="text-sm text-hydro-onyx/70">
+              We will confirm stock and send you payment details shortly.
+            </p>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -133,52 +196,18 @@ export default function CheckoutForm() {
                 Checkout
               </h2>
               <div className="grid grid-cols-1 gap-4">
-                <input
-                  required
-                  name="first_name"
-                  placeholder="First Name"
-                  value={billing.first_name}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
-                />
-                <input
-                  required
-                  name="last_name"
-                  placeholder="Last Name"
-                  value={billing.last_name}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
-                />
-                <input
-                  name="company"
-                  placeholder="Company (optional)"
-                  value={billing.company}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
-                />
-                <input
-                  required
-                  name="address_1"
-                  placeholder="Address Line 1"
-                  value={billing.address_1}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
-                />
-                <input
-                  name="address_2"
-                  placeholder="Address Line 2"
-                  value={billing.address_2}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
-                />
-                <input
-                  required
-                  name="city"
-                  placeholder="City"
-                  value={billing.city}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
-                />
+                {/* Billing Fields */}
+                {["first_name","last_name","company","address_1","address_2","city","postcode","email","phone"].map((field) => (
+                  <input
+                    key={field}
+                    required={field!=="company"}
+                    name={field}
+                    placeholder={field.replace("_"," ")}
+                    value={(billing as any)[field]}
+                    onChange={handleChange}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
+                  />
+                ))}
                 <select
                   required
                   name="state"
@@ -188,41 +217,14 @@ export default function CheckoutForm() {
                 >
                   <option value="">Select Province</option>
                   {provinces.map((prov) => (
-                    <option key={prov} value={prov}>
-                      {prov}
-                    </option>
+                    <option key={prov} value={prov}>{prov}</option>
                   ))}
                 </select>
-                <input
-                  required
-                  name="postcode"
-                  placeholder="Postal Code"
-                  value={billing.postcode}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
-                />
                 <input
                   name="country"
                   value="South Africa"
                   disabled
                   className="w-full p-2 border border-gray-200 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
-                />
-                <input
-                  required
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  value={billing.email}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
-                />
-                <input
-                  required
-                  name="phone"
-                  placeholder="Phone"
-                  value={billing.phone}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-hydro-green"
                 />
               </div>
 

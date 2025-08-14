@@ -1,19 +1,27 @@
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
-import { NextRequest, NextResponse } from "next/server"
-import WooCommerceRestApi from "@woocommerce/woocommerce-rest-api"
+import { NextRequest, NextResponse } from "next/server";
+import WooCommerceRestApi from "@woocommerce/woocommerce-rest-api";
 
 export async function POST(req: NextRequest) {
+  // Make sure env variables exist
+  if (!process.env.WC_API_KEY || !process.env.WC_API_SECRET) {
+    return NextResponse.json(
+      { success: false, message: "WooCommerce API credentials are missing" },
+      { status: 500 }
+    );
+  }
+
   const api = new WooCommerceRestApi({
-    url: "https://hydroworks.co.za",
-    consumerKey: process.env.WC_API_KEY || "",
-    consumerSecret: process.env.WC_API_SECRET || "",
+    url: "https://backend.hydroworks.co.za/wp",
+    consumerKey: process.env.WC_API_KEY,
+    consumerSecret: process.env.WC_API_SECRET,
     version: "wc/v3",
     timeout: 10000,
-  })
+  });
 
   try {
-    const body = await req.json()
+    const body = await req.json();
     const {
       billing,
       shipping,
@@ -21,9 +29,10 @@ export async function POST(req: NextRequest) {
       shipping_lines,
       payment_method = "bacs",
       payment_method_title = "Direct Bank Transfer",
-    } = body
+      customer_note,
+    } = body;
 
-    const orderData = {
+    const orderData: Record<string, any> = {
       payment_method,
       payment_method_title,
       set_paid: false,
@@ -31,24 +40,29 @@ export async function POST(req: NextRequest) {
       shipping,
       line_items,
       shipping_lines,
+    };
+
+    if (customer_note) {
+      orderData.customer_note = customer_note;
     }
 
-    const { data: order } = await api.post("orders", orderData)
+    const { data: order } = await api.post("orders", orderData);
 
     return NextResponse.json({
       success: true,
-      message: "Order submitted",
+      message: "Order submitted successfully",
       order,
-    })
+    });
   } catch (error: any) {
-    console.error("Order Error:", error.response?.data || error.message)
+    const errorMsg = error.response?.data || error.message || "Unknown error";
+    console.error("WooCommerce Order Error:", errorMsg);
     return NextResponse.json(
       {
         success: false,
         message: "Order submission failed",
-        error: error.response?.data || error.message,
+        error: errorMsg,
       },
       { status: 500 }
-    )
+    );
   }
 }
