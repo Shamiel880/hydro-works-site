@@ -11,10 +11,11 @@ import { Footer } from "@/components/footer"         // ✅ Import Footer
 import { AnimatedHeader } from "@/components/animated-header" // ✅ Import Header
 
 export const metadata: Metadata = {
-  title: "Hydro Works Store",
-  description: "Smart horticultural shopping powered by Next.js and WooCommerce.",
-  generator: "v0.dev",
-}
+  title: "Hydro Works Store – Hydroponics & Organic Growing Solutions",
+  description: "Shop premium hydroponic systems, organic nutrients, and horticultural solutions at Hydro Works. Serving growers across Cape Town and South Africa.",
+  generator: "Hydro Works",
+};
+
 
 export default function RootLayout({
   children,
