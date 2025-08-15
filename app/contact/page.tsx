@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-
+import Head from "next/head";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -150,66 +150,94 @@ export default function ContactPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-hydro-white">
-        <AnimatedHeader />
-        <div className="pt-24 flex items-center justify-center min-h-screen">
-          <motion.div
-            className="text-center max-w-md mx-auto p-8"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="w-16 h-16 bg-hydro-green rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="h-8 w-8 text-hydro-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-hydro-onyx mb-4">
-              Message Sent Successfully!
-            </h2>
-            <p className="text-hydro-onyx/70 mb-6">
-              Thank you for contacting us. We'll get back to you within 4 hours
-              during business hours.
-            </p>
-            <Button
-              onClick={() => setIsSubmitted(false)}
-              className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white"
+      <>
+        <Head>
+          <title>Message Sent Successfully | Hydro Works</title>
+          <meta
+            name="description"
+            content="Your message has been sent successfully. We'll get back to you within 4 hours during business hours."
+          />
+        </Head>
+        <div className="min-h-screen bg-hydro-white">
+          <AnimatedHeader />
+          <div className="pt-24 flex items-center justify-center min-h-[calc(100vh-6rem)]">
+            <motion.div
+              className="text-center max-w-md mx-auto p-8"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
             >
-              Send Another Message
-            </Button>
-          </motion.div>
+              <div className="w-16 h-16 bg-hydro-green rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="h-8 w-8 text-hydro-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-hydro-onyx mb-4">
+                Message Sent Successfully!
+              </h2>
+              <p className="text-hydro-onyx/70 mb-6">
+                Thank you for contacting us. We'll get back to you within 4 hours
+                during business hours.
+              </p>
+              <Button
+                onClick={() => setIsSubmitted(false)}
+                className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white"
+              >
+                Send Another Message
+              </Button>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-hydro-white">
-      <AnimatedHeader />
+    <>
+      <Head>
+        <title>Contact Us | Hydro Works</title>
+        <meta
+          name="description"
+          content="Get in touch with Hydro Works, your Cape Town-based supplier of sustainable hydroponics and organic growing solutions."
+        />
+        <meta name="keywords" content="hydroponics, contact, Cape Town, growing solutions" />
+        <link rel="canonical" href="https://hydroworks.co.za/contact" />
+        
+        {/* Open Graph / Social Media Meta Tags */}
+        <meta property="og:title" content="Contact Hydro Works" />
+        <meta
+          property="og:description"
+          content="Reach out to our team of hydroponics experts"
+        />
+        <meta property="og:url" content="https://hydroworks.co.za/contact" />
+        <meta property="og:type" content="website" />
+      </Head>
 
-      <div className="pt-24">
-        {/* Hero Section */}
-        <section className="py-20 bg-gradient-to-b from-hydro-mint/10 to-hydro-white">
-          <div className="container">
-            <motion.div
-              className="text-center max-w-4xl mx-auto"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <h1 className="text-4xl font-bold tracking-tight text-hydro-onyx sm:text-5xl lg:text-6xl mb-6">
-                <span className="bg-gradient-to-r from-hydro-green to-hydro-onyx bg-clip-text text-transparent">
-                  Get In Touch
-                </span>
-                <br />
-                With Our Team
-              </h1>
-              <p className="text-xl text-hydro-onyx/80 mb-8 max-w-3xl mx-auto">
-                Ready to transform your growing operation? Our team of experts
-                is here to help you find the perfect solution for your needs.
-                Let's grow something amazing together.
-              </p>
-            </motion.div>
-          </div>
-        </section>
+      <div className="min-h-screen bg-hydro-white">
+        <AnimatedHeader />
+        <div className="pt-24">
+          {/* Hero Section */}
+          <section className="py-20 bg-gradient-to-b from-hydro-mint/10 to-hydro-white">
+            <div className="container">
+              <motion.div
+                className="text-center max-w-4xl mx-auto"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                <h1 className="text-4xl font-bold tracking-tight text-hydro-onyx sm:text-5xl lg:text-6xl mb-6">
+                  <span className="bg-gradient-to-r from-hydro-green to-hydro-onyx bg-clip-text text-transparent">
+                    Get In Touch
+                  </span>
+                  <br />
+                  With Our Team
+                </h1>
+                <p className="text-xl text-hydro-onyx/80 mb-8 max-w-3xl mx-auto">
+                  Ready to transform your growing operation? Our team of experts
+                  is here to help you find the perfect solution for your needs.
+                  Let's grow something amazing together.
+                </p>
+              </motion.div>
+            </div>
+          </section>
 
         {/* Contact Methods Section */}
         <section className="py-20">
@@ -736,5 +764,6 @@ export default function ContactPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }

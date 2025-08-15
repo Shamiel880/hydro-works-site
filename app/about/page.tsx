@@ -1,5 +1,6 @@
 "use client"
 
+import Head from "next/head";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -62,6 +63,17 @@ const values = [
 
 export default function AboutPage() {
   return (
+    <>
+      {/* SEO Head */}
+      <Head>
+        <title>Hydro Works – About Us</title>
+        <meta
+          name="description"
+          content="Learn about Hydro Works, a Cape Town-based horticultural supplier offering sustainable hydroponics and organic growing solutions."
+        />
+        <link rel="canonical" href="https://hydroworks.co.za/about" />
+      </Head>
+      
     <div className="min-h-screen bg-hydro-white">
       <AnimatedHeader />
 
@@ -248,6 +260,7 @@ export default function AboutPage() {
         </div>
       </section>
     </div>
+  </>
   )
 }
 

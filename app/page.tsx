@@ -1,5 +1,6 @@
 "use client";
 
+import Head from "next/head";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,72 +31,106 @@ export default function HomePage() {
 
   const heroInView = useInView(heroRef, { once: true, margin: "-100px" });
   const aboutInView = useInView(aboutRef, { once: true, margin: "-100px" });
-  const solutionsInView = useInView(solutionsRef, {
-    once: true,
-    margin: "-100px",
-  });
+  const solutionsInView = useInView(solutionsRef, { once: true, margin: "-100px" });
 
   const { scrollYProgress } = useScroll();
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
 
   return (
-    <div className="min-h-screen bg-hydro-white overflow-x-hidden">
-      <AnimatedHeader />
+    <>
+      {/* SEO Head */}
+      <Head>
+        <title>Hydro Works – Holistic Horticultural Solutions</title>
+        <meta
+          name="description"
+          content="From organic growing to high-tech hydroponics, Hydro Works provides sustainable, data-driven horticultural systems for South African growers."
+        />
+        <link rel="canonical" href="https://hydroworks.co.za/" />
 
-      {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <HeroBackground />
-        <motion.div
-          ref={heroRef}
-          className="container relative z-10 text-center"
-          initial={{ opacity: 0, y: 50 }}
-          animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <motion.h1
-            className="text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl mb-6"
-            initial={{ opacity: 0, y: 30 }}
-            animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <span className="bg-gradient-to-r from-hydro-green to-hydro-onyx bg-clip-text text-transparent">
-              Holistic Horticultural
-            </span>
-            <br />
-            <span className="text-hydro-onyx">Solutions</span>
-          </motion.h1>
+        {/* Open Graph */}
+        <meta property="og:title" content="Hydro Works – Holistic Horticultural Solutions" />
+        <meta
+          property="og:description"
+          content="From organic growing to high-tech hydroponics, Hydro Works provides sustainable, data-driven horticultural systems for South African growers."
+        />
+        <meta property="og:image" content="https://hydroworks.co.za/images/home-hero.jpg" />
+        <meta property="og:url" content="https://hydroworks.co.za/" />
+        <meta property="og:type" content="website" />
 
-          <motion.p
-            className="text-xl leading-8 text-hydro-onyx/80 max-w-3xl mx-auto mb-10"
-            initial={{ opacity: 0, y: 30 }}
-            animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            From organic growing to high-tech hydroponics — we cultivate your
-            success with sustainable, data-driven systems designed for South
-            African growers.
-          </motion.p>
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "Hydro Works",
+              "url": "https://hydroworks.co.za",
+              "logo": "https://hydroworks.co.za/images/logo.png",
+              "sameAs": [
+                "https://www.facebook.com/hydroworks",
+                "https://www.instagram.com/hydroworks"
+              ]
+            }),
+          }}
+        />
+      </Head>
 
+      {/* Page Content */}
+      <div className="min-h-screen bg-hydro-white overflow-x-hidden">
+        <AnimatedHeader />
+        {/* Hero Section */}
+        <section className="relative h-screen flex items-center justify-center overflow-hidden">
+          <HeroBackground />
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            ref={heroRef}
+            className="container relative z-10 text-center"
+            initial={{ opacity: 0, y: 50 }}
+            animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <Button
-              size="lg"
-              onClick={() => {
-                document
-                  .getElementById("hydro-systems")
-                  ?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white px-10 py-6 text-xl rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+            <motion.h1
+              className="text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl mb-6"
+              initial={{ opacity: 0, y: 30 }}
+              animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
             >
-              Explore Our Systems
-              <ArrowRight className="ml-3 h-6 w-6" />
-            </Button>
+              <span className="bg-gradient-to-r from-hydro-green to-hydro-onyx bg-clip-text text-transparent">
+                Holistic Horticultural
+              </span>
+              <br />
+              <span className="text-hydro-onyx">Solutions</span>
+            </motion.h1>
+            <motion.p
+              className="text-xl leading-8 text-hydro-onyx/80 max-w-3xl mx-auto mb-10"
+              initial={{ opacity: 0, y: 30 }}
+              animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              From organic growing to high-tech hydroponics — we cultivate your
+              success with sustainable, data-driven systems designed for South
+              African growers.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
+              <Button
+                size="lg"
+                onClick={() => {
+                  document
+                    .getElementById("hydro-systems")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white px-10 py-6 text-xl rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Explore Our Systems
+                <ArrowRight className="ml-3 h-6 w-6" />
+              </Button>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      </section>
+        </section>
 
       {/* Solutions Section */}
       <section
@@ -305,5 +340,6 @@ export default function HomePage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

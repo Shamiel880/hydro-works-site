@@ -1,5 +1,6 @@
 "use client"
 
+import Head from "next/head";
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -175,48 +176,68 @@ const solutions = [
 
 export default function SolutionsPage() {
   return (
-    <div className="min-h-screen bg-hydro-white">
-      <AnimatedHeader />
+    <>
+      <Head>
+        <title>Growing Solutions | Hydro Works</title>
+        <meta
+          name="description"
+          content="Discover holistic horticultural solutions for every grower - from backyard gardens to commercial cultivation."
+        />
+        <meta name="keywords" content="hydroponics, growing solutions, horticulture, sustainable farming" />
+        <link rel="canonical" href="https://hydroworks.co.za/solutions" />
+        
+        {/* Open Graph / Social Media Meta Tags */}
+        <meta property="og:title" content="Growing Solutions | Hydro Works" />
+        <meta
+          property="og:description"
+          content="Holistic horticultural solutions for every grower"
+        />
+        <meta property="og:url" content="https://hydroworks.co.za/solutions" />
+        <meta property="og:type" content="website" />
+      </Head>
 
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-b from-hydro-mint/10 to-hydro-white">
-        <div className="container">
-          <motion.div
-            className="text-center max-w-4xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h1 className="text-4xl font-bold tracking-tight text-hydro-onyx sm:text-5xl lg:text-6xl mb-6">
-              <span className="bg-gradient-to-r from-hydro-green to-hydro-onyx bg-clip-text text-transparent">
-                Holistic Horticultural
-              </span>
-              <br />
-              Solutions for Every Grower
-            </h1>
-            <p className="text-xl text-hydro-onyx/80 mb-8 max-w-3xl mx-auto">
-              At Hydro Works, we bring together technology, sustainability, and community to support growers of all
-              levels—from backyard gardens to commercial cultivation.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white" asChild>
-                <Link href="/contact">
-                  Get Custom Quote
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-hydro-green text-hydro-green hover:bg-hydro-green hover:text-hydro-white bg-transparent"
-                asChild
-              >
-                <Link href="/store">Explore Our Store</Link>
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <div className="min-h-screen bg-hydro-white">
+        <AnimatedHeader />
+
+        {/* Hero Section */}
+        <section className="pt-24 pb-20 bg-gradient-to-b from-hydro-mint/10 to-hydro-white">
+          <div className="container">
+            <motion.div
+              className="text-center max-w-4xl mx-auto"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <h1 className="text-4xl font-bold tracking-tight text-hydro-onyx sm:text-5xl lg:text-6xl mb-6">
+                <span className="bg-gradient-to-r from-hydro-green to-hydro-onyx bg-clip-text text-transparent">
+                  Holistic Horticultural
+                </span>
+                <br />
+                Solutions for Every Grower
+              </h1>
+              <p className="text-xl text-hydro-onyx/80 mb-8 max-w-3xl mx-auto">
+                At Hydro Works, we bring together technology, sustainability, and community to support growers of all
+                levels—from backyard gardens to commercial cultivation.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white" asChild>
+                  <Link href="/contact">
+                    Get Custom Quote
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-hydro-green text-hydro-green hover:bg-hydro-green hover:text-hydro-white bg-transparent"
+                  asChild
+                >
+                  <Link href="/store">Explore Our Store</Link>
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        </section>
 
       {/* Solutions Grid */}
       <section className="py-20">
@@ -367,5 +388,6 @@ export default function SolutionsPage() {
         </div>
       </section>
     </div>
+    </>
   )
 }

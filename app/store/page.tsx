@@ -1,5 +1,6 @@
 "use client";
 
+import Head from "next/head";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -161,150 +162,171 @@ export default function StorePage() {
   }, [loading, hasMore, fetchProducts]);
 
   return (
-    <div className="min-h-screen bg-hydro-white">
-      <AnimatedHeader />
-      <div className="pt-24">
-        <div className="container py-8">
-          <motion.div
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h1 className="text-4xl font-bold text-hydro-onyx mb-4">
-              <span className="bg-gradient-to-r from-hydro-green to-hydro-onyx bg-clip-text text-transparent">
-                Hydro Works
-              </span>{" "}
-              Store
-            </h1>
-            <p className="text-lg text-hydro-onyx/70 max-w-2xl mx-auto">
-              Discover our complete range of hydroponic systems, organic inputs,
-              and growing solutions
-            </p>
-          </motion.div>
+    <>
+      <Head>
+        <title>Hydroponics Store | Hydro Works</title>
+        <meta
+          name="description"
+          content="Browse our complete range of hydroponic systems, organic inputs, and growing solutions"
+        />
+        <meta name="keywords" content="hydroponics store, grow systems, organic inputs, hydroponic supplies" />
+        <link rel="canonical" href="https://hydroworks.co.za/store" />
+        
+        {/* Open Graph / Social Media Meta Tags */}
+        <meta property="og:title" content="Hydroponics Store | Hydro Works" />
+        <meta
+          property="og:description"
+          content="Shop premium hydroponic systems and growing solutions"
+        />
+        <meta property="og:url" content="https://hydroworks.co.za/store" />
+        <meta property="og:type" content="website" />
+      </Head>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-            {/* Mobile filters */}
-            <div className="block lg:hidden">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="text-hydro-onyx/80 border-hydro-green/20"
-                  >
-                    <Menu className="mr-2 h-4 w-4" />
-                    Filters
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-72 p-4 overflow-y-auto">
-                  <SidebarFilters
-                    categories={categories}
-                    selectedCategory={selectedCategory}
-                    priceRange={priceRange}
-                    sortBy={sortBy}
-                    searchTerm={searchTerm}
-                    updateURLParams={updateURLParams}
-                  />
-                </SheetContent>
-              </Sheet>
-            </div>
+      <div className="min-h-screen bg-hydro-white">
+        <AnimatedHeader />
+        <div className="pt-24">
+          <div className="container py-8">
+            <motion.div
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <h1 className="text-4xl font-bold text-hydro-onyx mb-4">
+                <span className="bg-gradient-to-r from-hydro-green to-hydro-onyx bg-clip-text text-transparent">
+                  Hydro Works
+                </span>{" "}
+                Store
+              </h1>
+              <p className="text-lg text-hydro-onyx/70 max-w-2xl mx-auto">
+                Discover our complete range of hydroponic systems, organic inputs,
+                and growing solutions
+              </p>
+            </motion.div>
 
-            {/* Desktop filters */}
-            <aside className="hidden lg:block sticky top-24 self-start bg-white border border-hydro-green/20 rounded-xl shadow p-6 max-h-[calc(100vh-6rem)] overflow-y-auto">
-              <SidebarFilters
-                categories={categories}
-                selectedCategory={selectedCategory}
-                priceRange={priceRange}
-                sortBy={sortBy}
-                searchTerm={searchTerm}
-                updateURLParams={updateURLParams}
-              />
-            </aside>
-
-            {/* Main content */}
-            <div>
-              {initialLoad && loading ? (
-                <div className="flex justify-center items-center py-20">
-                  <Loader2 className="h-8 w-8 animate-spin text-hydro-green" />
-                  <span className="ml-2 text-hydro-onyx/70">
-                    Loading products...
-                  </span>
-                </div>
-              ) : error ? (
-                <div className="text-center py-20">
-                  <div className="bg-red-50 border border-red-200 rounded-2xl p-8 max-w-md mx-auto">
-                    <h3 className="text-lg font-semibold text-red-800 mb-2">
-                      Unable to Load Products
-                    </h3>
-                    <p className="text-red-600 mb-4">{error}</p>
+            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+              {/* Mobile filters */}
+              <div className="block lg:hidden">
+                <Sheet>
+                  <SheetTrigger asChild>
                     <Button
-                      onClick={() => window.location.reload()}
                       variant="outline"
-                      className="border-red-300 text-red-700 hover:bg-red-50"
+                      className="text-hydro-onyx/80 border-hydro-green/20"
                     >
-                      Try Again
+                      <Menu className="mr-2 h-4 w-4" />
+                      Filters
                     </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-72 p-4 overflow-y-auto">
+                    <SidebarFilters
+                      categories={categories}
+                      selectedCategory={selectedCategory}
+                      priceRange={priceRange}
+                      sortBy={sortBy}
+                      searchTerm={searchTerm}
+                      updateURLParams={updateURLParams}
+                    />
+                  </SheetContent>
+                </Sheet>
+              </div>
+
+              {/* Desktop filters */}
+              <aside className="hidden lg:block sticky top-24 self-start bg-white border border-hydro-green/20 rounded-xl shadow p-6 max-h-[calc(100vh-6rem)] overflow-y-auto">
+                <SidebarFilters
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  priceRange={priceRange}
+                  sortBy={sortBy}
+                  searchTerm={searchTerm}
+                  updateURLParams={updateURLParams}
+                />
+              </aside>
+
+              {/* Main content */}
+              <div>
+                {initialLoad && loading ? (
+                  <div className="flex justify-center items-center py-20">
+                    <Loader2 className="h-8 w-8 animate-spin text-hydro-green" />
+                    <span className="ml-2 text-hydro-onyx/70">
+                      Loading products...
+                    </span>
                   </div>
-                </div>
-              ) : (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    {products.length > 0 ? (
-                      <>
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-12">
-                          {products.map((product) => (
-                            <ProductCard key={`${product.id}-${product.slug}`} product={product} />
-                          ))}
-                        </div>
-                        
-                        {/* Infinite scroll sentinel */}
-                        <div id="sentinel" className="h-10 flex justify-center">
-                          {loading && (
-                            <Loader2 className="h-6 w-6 animate-spin text-hydro-green" />
-                          )}
-                          {!hasMore && products.length > 0 && (
-                            <p className="text-hydro-onyx/70 text-sm">
-                              No more products to load
+                ) : error ? (
+                  <div className="text-center py-20">
+                    <div className="bg-red-50 border border-red-200 rounded-2xl p-8 max-w-md mx-auto">
+                      <h3 className="text-lg font-semibold text-red-800 mb-2">
+                        Unable to Load Products
+                      </h3>
+                      <p className="text-red-600 mb-4">{error}</p>
+                      <Button
+                        onClick={() => window.location.reload()}
+                        variant="outline"
+                        className="border-red-300 text-red-700 hover:bg-red-50"
+                      >
+                        Try Again
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      {products.length > 0 ? (
+                        <>
+                          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-12">
+                            {products.map((product) => (
+                              <ProductCard key={`${product.id}-${product.slug}`} product={product} />
+                            ))}
+                          </div>
+                          
+                          {/* Infinite scroll sentinel */}
+                          <div id="sentinel" className="h-10 flex justify-center">
+                            {loading && (
+                              <Loader2 className="h-6 w-6 animate-spin text-hydro-green" />
+                            )}
+                            {!hasMore && products.length > 0 && (
+                              <p className="text-hydro-onyx/70 text-sm">
+                                No more products to load
+                              </p>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-20">
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 max-w-md mx-auto">
+                            <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                              No Products Found
+                            </h3>
+                            <p className="text-yellow-600 mb-4">
+                              Try adjusting your search or filter criteria
                             </p>
-                          )}
+                            <Button
+                              onClick={() => updateURLParams({
+                                search: null,
+                                category: null,
+                                sort: null,
+                                price: null,
+                                page: "1",
+                              })}
+                              variant="outline"
+                              className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                            >
+                              Clear Filters
+                            </Button>
+                          </div>
                         </div>
-                      </>
-                    ) : (
-                      <div className="text-center py-20">
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 max-w-md mx-auto">
-                          <h3 className="text-lg font-semibold text-yellow-800 mb-2">
-                            No Products Found
-                          </h3>
-                          <p className="text-yellow-600 mb-4">
-                            Try adjusting your search or filter criteria
-                          </p>
-                          <Button
-                            onClick={() => updateURLParams({
-                              search: null,
-                              category: null,
-                              sort: null,
-                              price: null,
-                              page: "1",
-                            })}
-                            variant="outline"
-                            className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
-                          >
-                            Clear Filters
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                </>
-              )}
+                      )}
+                    </motion.div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

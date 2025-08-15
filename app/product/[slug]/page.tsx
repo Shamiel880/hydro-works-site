@@ -1,6 +1,6 @@
 // app/product/[slug]/page.tsx
-
 import { notFound } from "next/navigation"
+import Head from "next/head"
 import type { WooCommerceProduct } from "@/types/woocommerce"
 import ProductPageClient from "./ProductPageClient"
 
@@ -23,10 +23,53 @@ async function getProduct(slug: string): Promise<WooCommerceProduct | null> {
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
   const { slug } = params
-
   const product = await getProduct(slug)
 
   if (!product) return notFound()
 
-  return <ProductPageClient product={product} />
+  return (
+    <>
+      <Head>
+        {/* Basic SEO */}
+        <title>{product.name} - Hydro Works</title>
+        <meta name="description" content={product.short_description} />
+        <link rel="canonical" href={`${process.env.NEXT_PUBLIC_SITE_URL}/product/${product.slug}`} />
+
+        {/* Open Graph for social sharing */}
+        <meta property="og:title" content={product.name} />
+        <meta property="og:description" content={product.short_description} />
+        <meta property="og:image" content={product.images?.[0]?.src || ""} />
+        <meta property="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL}/product/${product.slug}`} />
+        <meta property="og:type" content="product" />
+
+        {/* Structured Data JSON-LD */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Product",
+              name: product.name,
+              image: product.images?.map((img) => img.src) || [],
+              description: product.short_description,
+              sku: product.sku || product.id,
+              brand: { "@type": "Brand", name: "Hydro Works" },
+              offers: {
+                "@type": "Offer",
+                url: `${process.env.NEXT_PUBLIC_SITE_URL}/product/${product.slug}`,
+                priceCurrency: "ZAR",
+                price: product.price,
+                availability:
+                  product.stock_status === "instock"
+                    ? "https://schema.org/InStock"
+                    : "https://schema.org/OutOfStock",
+              },
+            }),
+          }}
+        />
+      </Head>
+
+      <ProductPageClient product={product} />
+    </>
+  )
 }
