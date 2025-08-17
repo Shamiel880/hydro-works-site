@@ -44,6 +44,7 @@ export function AnimatedHeader() {
           {[
             { name: "Store", href: "/store" },
             { name: "Solutions", href: "/solutions" },
+            { name: "Learning", href: "/learning" },
             { name: "About", href: "/about" },
             { name: "Contact", href: "/contact" },
           ].map((item) => (
