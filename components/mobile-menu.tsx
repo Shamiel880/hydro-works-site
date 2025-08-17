@@ -10,6 +10,7 @@ import {
   Users,
   Phone,
   ShoppingCart,
+  BookOpen,
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
@@ -28,6 +29,7 @@ export function MobileMenu() {
     { name: "Home", href: "/", icon: Home },
     { name: "Solutions", href: "/solutions", icon: Wrench },
     { name: "Store", href: "/store", icon: Store },
+    { name: "Learning Centre", href: "/learning", icon: BookOpen },
     { name: "About", href: "/about", icon: Users },
     { name: "Contact", href: "/contact", icon: Phone },
   ];
