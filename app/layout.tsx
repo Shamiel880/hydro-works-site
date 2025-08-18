@@ -4,6 +4,7 @@ import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import "./globals.css"
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import { CartProvider } from "@/lib/cartContext"
 import { Toaster } from "react-hot-toast"
@@ -31,6 +32,7 @@ export default function RootLayout({
           <main>{children}</main>
           <Footer />         {/* ✅ Footer appears on all pages */}
           <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+          <SpeedInsights />
         </CartProvider>
       </body>
     </html>
