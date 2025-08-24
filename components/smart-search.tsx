@@ -12,24 +12,54 @@ import type { WooCommerceProduct } from "@/types/woocommerce"
 
 interface SmartSearchProps {
   onClose?: () => void
+  updateURLParams?: (params: { search: string | null; page: string }) => void
+  dropdownClassName?: string
+  className?: string
 }
 
-export function SmartSearch({ onClose }: SmartSearchProps) {
+// Match the structure from your store page
+interface ProductsResponse {
+  items: WooCommerceProduct[]
+  products?: WooCommerceProduct[] // Fallback for different API structures
+  pagination?: {
+    page: number
+    perPage: number
+    total: number
+    totalPages: number
+  }
+}
+
+function formatPrice(priceHtml: string): string {
+  if (!priceHtml) return ""
+  // Create a temporary div to extract text content from HTML
+  const temp = document.createElement('div')
+  temp.innerHTML = priceHtml
+  return temp.textContent || temp.innerText || ""
+}
+
+export function SmartSearch({ 
+  onClose, 
+  updateURLParams, 
+  dropdownClassName = "",
+  className = ""
+}: SmartSearchProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [results, setResults] = useState<WooCommerceProduct[]>([])
   const [loading, setLoading] = useState(false)
   const [showResults, setShowResults] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (searchTerm.length >= 2) {
-        performSearch(searchTerm)
+      if (searchTerm.trim().length >= 2) {
+        performSearch(searchTerm.trim())
       } else {
         setResults([])
         setShowResults(false)
+        setError(null)
       }
     }, 300)
 
@@ -50,16 +80,37 @@ export function SmartSearch({ onClose }: SmartSearchProps) {
 
   const performSearch = async (query: string) => {
     setLoading(true)
+    setError(null)
+    
     try {
-      const response = await fetch(`/api/products?search=${encodeURIComponent(query)}&per_page=5`)
-      if (response.ok) {
-        const data = await response.json()
-        setResults(data.products || [])
-        setShowResults(true)
+      // Use the same API structure as your store page
+      const params = new URLSearchParams({
+        search: query,
+        per_page: "5",
+        page: "1"
+      })
+      
+      const response = await fetch(`/api/products?${params}`)
+      
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status}`)
       }
+      
+      const data: ProductsResponse = await response.json()
+      
+      // Handle both possible response structures
+      const products = data.items || data.products || []
+      
+      console.log('Search API Response:', data) // Debug log
+      console.log('Extracted products:', products) // Debug log
+      
+      setResults(products)
+      setShowResults(true)
     } catch (error) {
       console.error("Search error:", error)
+      setError(error instanceof Error ? error.message : "Search failed")
       setResults([])
+      setShowResults(true)
     } finally {
       setLoading(false)
     }
@@ -71,8 +122,21 @@ export function SmartSearch({ onClose }: SmartSearchProps) {
     onClose?.()
   }
 
+  const handleViewAllResults = () => {
+    if (updateURLParams) {
+      // If we're in the sidebar, update the URL params
+      updateURLParams({ search: searchTerm.trim(), page: "1" })
+      setShowResults(false)
+      setSearchTerm("")
+    } else {
+      // If we're in the header, navigate to store page
+      window.location.href = `/store?search=${encodeURIComponent(searchTerm.trim())}`
+    }
+    onClose?.()
+  }
+
   return (
-    <div ref={searchRef} className="relative w-full max-w-md">
+    <div ref={searchRef} className={`relative w-full max-w-md ${className}`}>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-hydro-onyx/50 h-4 w-4" />
         <Input
@@ -82,7 +146,12 @@ export function SmartSearch({ onClose }: SmartSearchProps) {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10 pr-10 border-hydro-green/20 focus:border-hydro-green bg-hydro-white"
-          onFocus={() => searchTerm.length >= 2 && setShowResults(true)}
+          onFocus={() => searchTerm.trim().length >= 2 && setShowResults(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && searchTerm.trim()) {
+              handleViewAllResults()
+            }
+          }}
         />
         {loading && (
           <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-hydro-green h-4 w-4 animate-spin" />
@@ -95,9 +164,21 @@ export function SmartSearch({ onClose }: SmartSearchProps) {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full left-0 right-0 mt-2 bg-hydro-white border border-hydro-green/20 rounded-2xl shadow-xl z-50 max-h-96 overflow-y-auto"
+            className={`absolute top-full mt-2 bg-hydro-white border border-hydro-green/20 rounded-2xl shadow-xl z-50 max-h-96 overflow-y-auto ${dropdownClassName}`}
           >
-            {results.length > 0 ? (
+            {error ? (
+              <div className="p-6 text-center text-red-500">
+                <p>Search error: {error}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => performSearch(searchTerm.trim())}
+                  className="mt-2"
+                >
+                  Try Again
+                </Button>
+              </div>
+            ) : results.length > 0 ? (
               <div className="p-2">
                 {results.map((product) => (
                   <Link
@@ -117,6 +198,10 @@ export function SmartSearch({ onClose }: SmartSearchProps) {
                                 width={48}
                                 height={48}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.src = "/placeholder.svg"
+                                }}
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
@@ -125,14 +210,22 @@ export function SmartSearch({ onClose }: SmartSearchProps) {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-hydro-onyx text-sm line-clamp-1">{product.name}</h4>
+                            <h4 className="font-medium text-hydro-onyx text-sm line-clamp-1">
+                              {product.name}
+                            </h4>
                             <div className="flex items-center justify-between mt-1">
-                              <div
-                                className="text-hydro-green font-semibold text-sm"
-                                dangerouslySetInnerHTML={{ __html: product.price_html }}
-                              />
+                              <div className="text-hydro-green font-semibold text-sm">
+                                {product.price_html ? 
+                                  formatPrice(product.price_html) : 
+                                  product.price ? 
+                                    `R ${product.price}` : 
+                                    'Price unavailable'
+                                }
+                              </div>
                               {product.categories && product.categories.length > 0 && (
-                                <span className="text-xs text-hydro-onyx/60">{product.categories[0].name}</span>
+                                <span className="text-xs text-hydro-onyx/60 truncate ml-2">
+                                  {product.categories[0].name}
+                                </span>
                               )}
                             </div>
                           </div>
@@ -142,23 +235,30 @@ export function SmartSearch({ onClose }: SmartSearchProps) {
                   </Link>
                 ))}
                 <div className="text-center p-2 border-t border-hydro-green/10">
-                  <Link href={`/store?search=${encodeURIComponent(searchTerm)}`} onClick={handleResultClick}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-hydro-green hover:text-hydro-green hover:bg-hydro-mint/20"
-                    >
-                      View all results for "{searchTerm}"
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-hydro-green hover:text-hydro-green hover:bg-hydro-mint/20"
+                    onClick={handleViewAllResults}
+                  >
+                    View all results for "{searchTerm}"
+                  </Button>
                 </div>
               </div>
-            ) : (
+            ) : searchTerm.trim().length >= 2 && !loading ? (
               <div className="p-6 text-center text-hydro-onyx/60">
                 <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-hydro-green/30" />
                 <p>No products found for "{searchTerm}"</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 text-hydro-green hover:text-hydro-green hover:bg-hydro-mint/20"
+                  onClick={handleViewAllResults}
+                >
+                  Search in store anyway
+                </Button>
               </div>
-            )}
+            ) : null}
           </motion.div>
         )}
       </AnimatePresence>

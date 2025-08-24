@@ -1,42 +1,50 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { motion } from "framer-motion"
-import { ShoppingCart } from "lucide-react"
-import Image from "next/image"
-import type { WooCommerceProduct } from "@/types/woocommerce"
-import { useCart } from "@/lib/cartContext"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
+import { ShoppingCart } from "lucide-react";
+import Image from "next/image";
+import type { WooCommerceProduct, WooCommerceCategory } from "@/types/woocommerce";
+import { useCart } from "@/lib/cartContext";
 
 interface ProductCardProps {
-  product: WooCommerceProduct
-  index: number
+  product: WooCommerceProduct;
+  index: number;
+  allCategories: WooCommerceCategory[]; // full category list
 }
 
-export default function ProductCard({ product, index }: ProductCardProps) {
-  const imageUrl = product.images?.[0]?.src ?? "/placeholder.png"
-  const inStock = product.stock_status === "instock"
-  const category = product.categories?.[0]?.name
-  const isPurchasable = product.type === "simple" && product.purchasable && inStock
+export default function ProductCard({ product, index, allCategories }: ProductCardProps) {
+  const imageUrl = product.images?.[0]?.src ?? "/placeholder.png";
+  const inStock = product.stock_status === "instock";
+  const isPurchasable = product.type === "simple" && product.purchasable && inStock;
 
-  const { addToCart } = useCart()
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const productUrl = `/product/${product.slug}`
+  const { addToCart } = useCart();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const productUrl = `/product/${product.slug}`;
 
-  // Prefetch product page when component mounts
   useEffect(() => {
-    router.prefetch(productUrl)
-  }, [router, productUrl])
+    router.prefetch(productUrl);
+  }, [router, productUrl]);
 
   const handleNavigation = (e: React.MouseEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    router.push(productUrl)
+    e.preventDefault();
+    setLoading(true);
+    router.push(productUrl);
+  };
+
+  // --- Compute first parent category only ---
+const mainCategory = (() => {
+  for (const cat of product.categories || []) {
+    const parent = cat.parentId ? allCategories.find(c => c.id === cat.parentId) : cat;
+    if (parent) return parent;
   }
+  return null;
+})();
 
   return (
     <motion.div
@@ -46,11 +54,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
       transition={{ duration: 0.6, delay: index * 0.1 }}
       viewport={{ once: true, margin: "-50px" }}
     >
-      <a
-        href={productUrl}
-        onClick={handleNavigation}
-        className="group block h-full"
-      >
+      <a href={productUrl} onClick={handleNavigation} className="group block h-full">
         <Card className="rounded-2xl overflow-hidden shadow-sm hover:bg-white relative h-full border-0">
           {/* Image Section */}
           <div className="aspect-square bg-white relative overflow-hidden">
@@ -66,30 +70,34 @@ export default function ProductCard({ product, index }: ProductCardProps) {
                 Sale
               </Badge>
             )}
-            {category && (
-              <Badge className="absolute top-3 right-3 bg-hydro-mint/70 text-hydro-green">
-                {category}
-              </Badge>
+
+            {/* Main parent category badge */}
+            {mainCategory && (
+              <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
+                <Badge className="bg-hydro-mint/70 text-hydro-green">
+                  {mainCategory.name}
+                </Badge>
+              </div>
             )}
+
+            {/* Stock Badge */}
             <Badge
               className={`absolute bottom-3 left-3 ${
-                inStock
-                  ? "bg-green-100 text-green-700"
-                  : "bg-gray-200 text-gray-600"
+                inStock ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"
               }`}
             >
               {inStock ? "In Stock" : "Out of Stock"}
             </Badge>
           </div>
 
+          {/* Product Info */}
           <CardContent className="p-3 text-center rounded-t-none rounded-2xl bg-gradient-to-t from-hydro-mint/50 to-white shadow-md">
             <div className="min-h-[3rem] mb-1">
-              <h3 className="text-sm font-medium text-onyx line-clamp-2">
-                {product.name}
-              </h3>
+              <h3 className="text-sm font-medium text-onyx line-clamp-2">{product.name}</h3>
             </div>
+            <p className="text-xs text-hydro-onyx/70 mb-1">From</p>
             <p className="text-palatanite_blue font-semibold text-base">
-              R {product.price}
+              R {product.price.toLocaleString()}
             </p>
           </CardContent>
 
@@ -101,8 +109,8 @@ export default function ProductCard({ product, index }: ProductCardProps) {
                 variant="ghost"
                 className="bg-white text-black border border-gray-200 hover:bg-gray-100 shadow-sm"
                 onClick={(e) => {
-                  e.preventDefault()
-                  addToCart(product, 1)
+                  e.preventDefault();
+                  addToCart(product, 1);
                 }}
               >
                 <ShoppingCart className="h-4 w-4 mr-1" />
@@ -120,5 +128,5 @@ export default function ProductCard({ product, index }: ProductCardProps) {
         </Card>
       </a>
     </motion.div>
-  )
+  );
 }

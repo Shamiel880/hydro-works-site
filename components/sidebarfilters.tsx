@@ -9,7 +9,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { SmartSearch } from "@/components/smart-search";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 interface Category {
   id: number;
@@ -35,25 +35,67 @@ export default function SidebarFilters({
   updateURLParams,
 }: SidebarFiltersProps) {
   const [isMounted, setIsMounted] = useState(false);
-  const categoriesRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  useEffect(() => setIsMounted(true), []);
 
-  if (!isMounted) return null;
+  const handlePriceChange = (val: string) => {
+    let minPrice: string | null = null;
+    let maxPrice: string | null = null;
+
+    switch (val) {
+      case "under-500": maxPrice = "500"; break;
+      case "500-2000": minPrice = "500"; maxPrice = "2000"; break;
+      case "2000-10000": minPrice = "2000"; maxPrice = "10000"; break;
+      case "over-10000": minPrice = "10000"; break;
+    }
+
+    updateURLParams({ page: "1", minPrice, maxPrice });
+  };
+
+  if (!isMounted) {
+    // Skeleton loader with consistent dimensions
+    return (
+      <div className="space-y-4">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-9 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-9 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-9 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+        <div className="space-y-2 max-h-64 overflow-hidden">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-6 bg-gray-200 rounded animate-pulse"></div>
+          ))}
+        </div>
+        <div className="pt-4 border-t border-gray-200">
+          <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
-      {/* Fixed top section */}
-      <div className="space-y-6 pb-6">
-        {/* Smart Search */}
+      {/* Fixed filters section */}
+      <div className="space-y-4 flex-shrink-0">
+        {/* Quick Search */}
         <div>
-          <label className="block text-hydro-onyx font-semibold mb-2">
+          <label className="block text-hydro-onyx font-semibold mb-2 text-sm">
             Quick Search
           </label>
-          <SmartSearch 
-            updateURLParams={updateURLParams}
+          <SmartSearch
+            updateURLParams={(val) => updateURLParams({ search: val, page: "1" })}
             dropdownClassName="left-0 right-0"
             className="border-hydro-green/20 focus-within:border-hydro-green"
           />
@@ -61,12 +103,12 @@ export default function SidebarFilters({
 
         {/* Sort */}
         <div>
-          <label className="block text-hydro-onyx font-semibold mb-1">
+          <label className="block text-hydro-onyx font-semibold mb-1 text-sm">
             Sort by
           </label>
           <Select
             value={sortBy}
-            onValueChange={(val) => updateURLParams({ sort: val })}
+            onValueChange={(val) => updateURLParams({ sort: val, page: "1" })}
           >
             <SelectTrigger className="text-sm border-hydro-green/20 focus:border-hydro-green">
               <SelectValue />
@@ -80,15 +122,12 @@ export default function SidebarFilters({
           </Select>
         </div>
 
-        {/* Price Range */}
+        {/* Price */}
         <div>
-          <label className="block text-hydro-onyx font-semibold mb-1">
+          <label className="block text-hydro-onyx font-semibold mb-1 text-sm">
             Price Range
           </label>
-          <Select
-            value={priceRange}
-            onValueChange={(val) => updateURLParams({ price: val, page: "1" })}
-          >
+          <Select value={priceRange} onValueChange={handlePriceChange}>
             <SelectTrigger className="text-sm border-hydro-green/20 focus:border-hydro-green">
               <SelectValue />
             </SelectTrigger>
@@ -101,55 +140,46 @@ export default function SidebarFilters({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Categories header */}
+        <div className="pt-2">
+          <label className="block text-hydro-onyx font-semibold mb-2 text-sm">
+            Categories
+          </label>
+        </div>
       </div>
 
       {/* Scrollable categories section */}
-      <div 
-        ref={categoriesRef}
-        className="flex-1 overflow-y-auto pb-4"
-        style={{
-          maxHeight: 'calc(100vh - 400px)', // Adjust based on your header height
-        }}
-      >
-        <div>
-          <label className="block text-hydro-onyx font-semibold mb-1">
-            Categories
-          </label>
-          <ul className="space-y-1">
-            <li>
-              <button
-                onClick={() => updateURLParams({ category: "all", page: "1" })}
-                className={`block w-full text-left ${
-                  selectedCategory === "all"
-                    ? "text-hydro-green font-semibold"
-                    : "text-hydro-onyx/80"
-                } hover:text-hydro-green`}
-              >
-                All Categories
-              </button>
-            </li>
-            {categories.map((cat) => (
-              <li key={cat.id}>
-                <button
-                  onClick={() =>
-                    updateURLParams({ category: cat.id.toString(), page: "1" })
-                  }
-                  className={`block w-full text-left ${
-                    selectedCategory === cat.id.toString()
-                      ? "text-hydro-green font-semibold"
-                      : "text-hydro-onyx/80"
-                  } hover:text-hydro-green`}
-                >
-                  {cat.name}
-                </button>
-              </li>
-            ))}
-          </ul>
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1">
+        <div className="space-y-1 pb-4">
+          <button
+            onClick={() => updateURLParams({ category: null, page: "1" })}
+            className={`block w-full text-left py-2 px-3 rounded-lg text-sm transition-all duration-200 ${
+              selectedCategory === "all"
+                ? "text-hydro-green font-semibold bg-hydro-green/8 border border-hydro-green/20"
+                : "text-hydro-onyx/80 hover:bg-hydro-green/5 hover:text-hydro-green border border-transparent"
+            }`}
+          >
+            All Categories
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => updateURLParams({ category: cat.slug || null, page: "1" })}
+              className={`block w-full text-left py-2 px-3 rounded-lg text-sm transition-all duration-200 ${
+                selectedCategory === (cat.slug || "")
+                  ? "text-hydro-green font-semibold bg-hydro-green/8 border border-hydro-green/20"
+                  : "text-hydro-onyx/80 hover:bg-hydro-green/5 hover:text-hydro-green border border-transparent"
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Fixed bottom section */}
-      <div className="pt-4 border-t border-hydro-green/20">
+      <div className="flex-shrink-0 pt-4 border-t border-hydro-green/10">
         <Button
           variant="outline"
           size="sm"
@@ -158,11 +188,12 @@ export default function SidebarFilters({
               search: null,
               category: null,
               sort: null,
-              price: null,
+              minPrice: null,
+              maxPrice: null,
               page: "1",
             })
           }
-          className="w-full border-hydro-green/20 hover:bg-hydro-green hover:text-white"
+          className="w-full border-hydro-green/20 hover:bg-hydro-green hover:text-white transition-colors duration-200"
         >
           Clear Filters
         </Button>
