@@ -225,7 +225,11 @@ export default function HomePage() {
               Our most popular and recommended growing solutions
             </p>
           </motion.div>
-          <ProductGrid category="Featured Products" maxProducts={4} />
+          <ProductGrid
+            category="Organic Inputs"
+            categoryId="30"
+            maxProducts={12}
+          />
         </div>
       </section>
 
