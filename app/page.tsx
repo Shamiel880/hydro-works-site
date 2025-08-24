@@ -225,10 +225,7 @@ export default function HomePage() {
               Our most popular and recommended growing solutions
             </p>
           </motion.div>
-          <ProductGrid  
-          category="Grow Space"
-            categoryId="59"
-            maxProducts={12}/>
+          <ProductGrid category="Featured Products" maxProducts={4} />
         </div>
       </section>
 
