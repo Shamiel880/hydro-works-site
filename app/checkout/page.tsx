@@ -632,7 +632,7 @@ const lineItemsPayload = cart.map(({ product, quantity }) => {
               </div>
 
               <div className="mt-6 text-center text-sm text-hydro-onyx/70 italic">
-                "Over 200 successful hydroponic projects completed in Cape Town"
+              "Delivering reliable horticultural solutions tailored to local growers."
               </div>
             </div>
           </CardContent>
