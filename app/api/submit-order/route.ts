@@ -2,39 +2,84 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";
 import WooCommerceRestApi from "@woocommerce/woocommerce-rest-api";
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma'; // Use the singleton
 
-const prisma = new PrismaClient();
-
-// Save quote to database using Prisma
+// Improved save function with connection pooling and retries
 async function saveQuoteToDatabase(quoteData: any) {
-  try {
-    const quote = await prisma.wooCommerceQuote.create({
-      data: {
+  let retries = 3;
+  
+  while (retries > 0) {
+    try {
+      console.log(`Attempting to save quote (${4 - retries}/3):`, {
         woocommerceOrderId: quoteData.woocommerce_order_id,
         customerEmail: quoteData.customer_email,
-        customerName: quoteData.customer_name,
-        customerPhone: quoteData.customer_phone,
-        customerCompany: quoteData.customer_company,
-        shippingAddress: quoteData.shipping_address,
-        billingAddress: quoteData.billing_address,
-        lineItems: quoteData.line_items,
-        shippingTotal: parseFloat(quoteData.shipping_total),
-        orderTotal: parseFloat(quoteData.order_total),
-        customerNote: quoteData.customer_note,
-        projectType: quoteData.project_type,
-        shippingRegion: quoteData.shipping_region,
-        estimatedFulfillment: quoteData.estimated_fulfillment,
-        metaData: quoteData.meta_data
-      }
-    });
+        orderTotal: quoteData.order_total
+      });
 
-    console.log('Quote saved to database:', quote);
-    return { success: true, data: quote };
-  } catch (error) {
-    console.error('Failed to save quote to database:', error);
-    return { success: false, error };
+      // Test connection with timeout
+      const connectionTest = await Promise.race([
+        prisma.$queryRaw`SELECT 1`,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Connection timeout')), 5000)
+        )
+      ]);
+
+      console.log('Database connection test passed');
+
+      const quote = await prisma.wooCommerceQuote.create({
+        data: {
+          woocommerceOrderId: quoteData.woocommerce_order_id,
+          customerEmail: quoteData.customer_email,
+          customerName: quoteData.customer_name,
+          customerPhone: quoteData.customer_phone || null,
+          customerCompany: quoteData.customer_company || null,
+          shippingAddress: quoteData.shipping_address,
+          billingAddress: quoteData.billing_address,
+          lineItems: quoteData.line_items,
+          shippingTotal: parseFloat(quoteData.shipping_total),
+          orderTotal: parseFloat(quoteData.order_total),
+          customerNote: quoteData.customer_note || null,
+          projectType: quoteData.project_type || null,
+          shippingRegion: quoteData.shipping_region || null,
+          estimatedFulfillment: quoteData.estimated_fulfillment || null,
+          metaData: quoteData.meta_data || null
+        }
+      });
+
+      console.log('✅ Quote saved successfully:', quote.id);
+      return { success: true, data: quote };
+
+    } catch (error: any) {
+      retries--;
+      console.error(`❌ Database save attempt failed (${3 - retries}/3):`, {
+        error: error.message,
+        code: error.code,
+        retriesLeft: retries
+      });
+
+      // Handle specific Prisma errors
+      if (error.code === 'P2002') {
+        console.error('Unique constraint violation - duplicate entry');
+        break; // Don't retry on constraint violations
+      } else if (error.code === 'P1001' || error.code === 'P1017') {
+        console.error('Database connection issue - retrying...');
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+          continue;
+        }
+      } else if (error.code === 'P1003') {
+        console.error('Database does not exist');
+        break;
+      }
+
+      if (retries === 0) {
+        console.error('All retry attempts failed');
+        return { success: false, error };
+      }
+    }
   }
+  
+  return { success: false, error: new Error('Max retries exceeded') };
 }
 
 // Email service integration
@@ -125,7 +170,6 @@ async function sendCustomerConfirmation(emailData: any) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      // FIXED: Use your verified email as 'from'
       from: 'Hydro Works <info@hydroworks.co.za>',
       to: [emailData.customer_email],
       subject: `Quote Request Confirmation #${emailData.order_id} - Hydro Works`,
@@ -242,7 +286,6 @@ async function sendSalesNotification(emailData: any) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      // FIXED: Use your verified email as 'from'
       from: 'Hydro Works Orders <info@hydroworks.co.za>',
       to: ['sales@hydroworks.co.za'],
       subject: `${urgencyLabel} Quote Request #${emailData.order_id} - R${emailData.order_total} - ${emailData.customer_name}`,
@@ -257,7 +300,7 @@ async function sendSalesNotification(emailData: any) {
 }
 
 export async function POST(req: NextRequest) {
-  // Make sure env variables exist
+  // Validate environment variables
   if (!process.env.WC_API_KEY || !process.env.WC_API_SECRET) {
     return NextResponse.json(
       { success: false, message: "WooCommerce API credentials are missing" },
@@ -265,6 +308,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json(
+      { success: false, message: "Database URL is missing" },
+      { status: 500 }
+    );
+  }
+
+  // Initialize WooCommerce API
   const api = new WooCommerceRestApi({
     url: "https://backend.hydroworks.co.za/wp",
     consumerKey: process.env.WC_API_KEY,
@@ -286,7 +337,9 @@ export async function POST(req: NextRequest) {
       meta_data = []
     } = body;
 
-    // FIXED: Properly format line_items for WooCommerce
+    console.log('Processing quote request with', line_items.length, 'items');
+
+    // Format line items for WooCommerce
     const orderData: Record<string, any> = {
       payment_method,
       payment_method_title,
@@ -294,7 +347,7 @@ export async function POST(req: NextRequest) {
       status: "pending",
       billing,
       shipping,
-      // CRITICAL FIX: Format line_items correctly for WooCommerce
+      // CRITICAL: Format line_items correctly for WooCommerce
       line_items: line_items.map((item: any) => {
         const lineItem: any = {
           quantity: item.quantity,
@@ -305,13 +358,10 @@ export async function POST(req: NextRequest) {
         // Handle variable products (have variation_id)
         if (item.variation_id) {
           // For variations, we need the parent product_id
-          // If product_id is empty/missing, we need to get it from somewhere
           if (item.parent_id) {
             lineItem.product_id = item.parent_id;
           } else {
-            // You'll need to get the parent product ID for this variation
             console.warn('Variation missing parent product_id:', item);
-            // For now, skip empty product_id items - you'll need to fix this in your frontend
           }
           lineItem.variation_id = item.variation_id;
         } else {
@@ -328,7 +378,7 @@ export async function POST(req: NextRequest) {
       orderData.customer_note = customer_note;
     }
 
-    // Add quote-specific meta data if provided
+    // Add quote-specific meta data
     if (meta_data && meta_data.length > 0) {
       orderData.meta_data = [
         ...meta_data,
@@ -348,9 +398,9 @@ export async function POST(req: NextRequest) {
     console.log('Formatted for WooCommerce:', JSON.stringify(orderData.line_items, null, 2));
     console.log('========================');
 
-    console.log('Submitting order data to WooCommerce:', JSON.stringify(orderData, null, 2));
-
+    console.log('Submitting order to WooCommerce...');
     const { data: order } = await api.post("orders", orderData);
+    console.log('✅ WooCommerce order created:', order.id);
 
     // Calculate totals for email from frontend data (keep using original line_items for email)
     const lineItemsTotal = line_items.reduce((sum: number, item: any) => {
@@ -381,13 +431,17 @@ export async function POST(req: NextRequest) {
       meta_data: meta_data
     };
 
-    // Save quote to Supabase database
+    // Save quote to database with improved error handling
+    console.log('Saving quote to database...');
     const quoteResult = await saveQuoteToDatabase(quoteData);
+    
     if (!quoteResult.success) {
-      console.error('Failed to save quote to database, but WooCommerce order was created successfully');
+      console.error('❌ Failed to save quote to database:', quoteResult.error);
+    } else {
+      console.log('✅ Quote saved to database successfully');
     }
 
-    // Send notification emails with accurate pricing from frontend
+    // Prepare email data with accurate pricing from frontend
     const emailData = {
       customer_email: billing.email,
       customer_name: `${billing.first_name} ${billing.last_name}`,
@@ -409,11 +463,13 @@ export async function POST(req: NextRequest) {
       project_type: meta_data.find((m: any) => m.key === '_customer_project_type')?.value || 'general',
     };
 
-    // Send emails but don't fail the order if emails fail
+    // Send notification emails (don't fail the order if emails fail)
     try {
+      console.log('Sending notification emails...');
       await sendQuoteRequestNotifications(emailData);
+      console.log('✅ Email notifications sent successfully');
     } catch (emailError) {
-      console.error('Email notifications failed, but order was created successfully:', emailError);
+      console.error('❌ Email notifications failed:', emailError);
     }
 
     return NextResponse.json({
@@ -421,12 +477,12 @@ export async function POST(req: NextRequest) {
       message: "Quote request submitted successfully",
       order,
       quote_saved: quoteResult.success,
-      supabase_quote_id: quoteResult.success ? quoteResult.data?.[0]?.id : null,
+      supabase_quote_id: quoteResult.success ? quoteResult.data?.id : null,
     });
 
   } catch (error: any) {
     const errorMsg = error.response?.data || error.message || "Unknown error";
-    console.error("WooCommerce Order Error:", errorMsg);
+    console.error("❌ Quote submission error:", errorMsg);
     
     // Log the full error for debugging
     if (error.response?.data) {
