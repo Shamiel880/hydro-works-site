@@ -60,6 +60,8 @@ async function syncProducts(products) {
         name: product.name,
         price: product.price || null,
         stock_status: product.stock_status || "instock",
+        description: product.description || "",             // <-- ADD
+        short_description: product.short_description || "", // <-- ADD
       },
       create: {
         wc_id: product.id,
@@ -71,8 +73,11 @@ async function syncProducts(products) {
         purchasable: product.purchasable != null ? product.purchasable : true,
         isPublished: true,
         on_sale: product.on_sale != null ? product.on_sale : false,
+        description: product.description || "",             // <-- ADD
+        short_description: product.short_description || "", // <-- ADD
       },
     });
+    
 
     // Connect categories
     if (product.categories && product.categories.length) {
