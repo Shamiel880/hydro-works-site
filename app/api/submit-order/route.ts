@@ -360,6 +360,97 @@ async function sendSalesNotification(emailData: any) {
   return responseData;
 }
 
+// WooCommerce API retry wrapper
+async function submitOrderWithRetry(api: any, orderData: any, maxRetries = 3) {
+  let lastError: any = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      log('info', `WooCommerce API attempt ${attempt}/${maxRetries}`);
+      
+      // Add jitter to prevent thundering herd
+      if (attempt > 1) {
+        const delay = (attempt - 1) * 2000 + Math.random() * 1000; // 2s, 3s + random
+        log('info', `Waiting ${Math.round(delay)}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      
+      const startTime = Date.now();
+      const { data: order } = await api.post("orders", orderData);
+      const duration = Date.now() - startTime;
+      
+      log('info', `WooCommerce API success on attempt ${attempt}`, {
+        duration: `${duration}ms`,
+        orderId: order.id
+      });
+      
+      return order;
+      
+    } catch (error: any) {
+      lastError = error;
+      const isRetryableError = isWooCommerceRetryableError(error);
+      
+      log('warn', `WooCommerce API attempt ${attempt} failed`, {
+        error: error.message,
+        status: error.response?.status,
+        code: error.code,
+        isRetryable: isRetryableError,
+        remainingAttempts: maxRetries - attempt
+      });
+      
+      // Don't retry on client errors (4xx) except specific cases
+      if (!isRetryableError) {
+        log('error', 'Non-retryable WooCommerce error, failing immediately');
+        throw error;
+      }
+      
+      // If this was the last attempt, throw the error
+      if (attempt === maxRetries) {
+        log('error', 'All WooCommerce retry attempts failed');
+        throw error;
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
+// Determine if a WooCommerce error is retryable
+function isWooCommerceRetryableError(error: any): boolean {
+  // Network errors (no response)
+  if (!error.response) {
+    return true;
+  }
+  
+  const status = error.response.status;
+  
+  // Retryable status codes
+  const retryableStatuses = [
+    408, // Request Timeout
+    429, // Too Many Requests
+    500, // Internal Server Error
+    502, // Bad Gateway  
+    503, // Service Unavailable
+    504, // Gateway Timeout
+    520, // Unknown Error (Cloudflare)
+    522, // Connection Timed Out (Cloudflare)
+    524, // A Timeout Occurred (Cloudflare)
+  ];
+  
+  if (retryableStatuses.includes(status)) {
+    return true;
+  }
+  
+  // Specific error codes that might be retryable
+  const errorCode = error.response?.data?.code;
+  const retryableCodes = [
+    'woocommerce_rest_cannot_create', // Sometimes temporary
+    'rest_cookie_invalid_nonce', // Can be temporary
+  ];
+  
+  return retryableCodes.includes(errorCode);
+}
+
 // Email service integration with better error handling
 async function sendQuoteRequestNotifications(emailData: any) {
   const results = {
@@ -456,13 +547,20 @@ export async function POST(req: NextRequest) {
       customerEmail: billing.email 
     });
 
-    // Initialize WooCommerce API with increased timeout
+    // Initialize WooCommerce API with retry-friendly settings
     const api = new WooCommerceRestApi({
       url: "https://backend.hydroworks.co.za/wp",
       consumerKey: process.env.WC_API_KEY,
       consumerSecret: process.env.WC_API_SECRET,
       version: "wc/v3",
-      timeout: 15000, // Increased timeout for serverless
+      timeout: 20000, // 20 second timeout
+      axiosConfig: {
+        // Add retry-friendly headers
+        headers: {
+          'Connection': 'keep-alive',
+          'Keep-Alive': 'timeout=20, max=1000'
+        }
+      }
     });
 
     // Format line items for WooCommerce with validation
@@ -534,9 +632,9 @@ export async function POST(req: NextRequest) {
       formattedCount: formattedLineItems.length 
     });
 
-    // Submit order to WooCommerce
+    // Submit order to WooCommerce with retry logic
     log('info', 'Submitting order to WooCommerce...');
-    const { data: order } = await api.post("orders", orderData);
+    const order = await submitOrderWithRetry(api, orderData);
     log('info', 'WooCommerce order created successfully', { orderId: order.id });
 
     // Calculate totals for database and email

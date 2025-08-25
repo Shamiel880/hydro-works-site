@@ -168,7 +168,7 @@ export default function HomePage() {
             viewport={{ once: true, margin: "-100px" }}
           >
             <h2 className="text-3xl font-bold tracking-tight text-hydro-onyx sm:text-4xl">
-              Hydroponic Systems
+              Hydroponic Inputs
             </h2>
             <p className="mt-4 text-lg text-hydro-onyx/70">
               Advanced soilless growing systems for maximum yield and efficiency
@@ -226,8 +226,8 @@ export default function HomePage() {
             </p>
           </motion.div>
           <ProductGrid
-            category="Organic Inputs"
-            categoryId="30"
+            category="Grow Space"
+            categoryId="59"
             maxProducts={12}
           />
         </div>

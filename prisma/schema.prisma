@@ -61,25 +61,6 @@ model ProductImage {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
-model Quote {
-  id          Int      @id @default(autoincrement())
-  clientName  String
-  email       String
-  items       String
-  totalAmount Float
-  createdAt   DateTime @default(now())
-  orders      Order[]
-}
-
-model Order {
-  id        Int      @id @default(autoincrement())
-  quoteId   Int
-  status    String   @default("pending")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  quote     Quote    @relation(fields: [quoteId], references: [id])
-}
-
 model WooCommerceQuote {
   id                   Int      @id @default(autoincrement())
   woocommerceOrderId   Int      @unique @map("woocommerce_order_id")
