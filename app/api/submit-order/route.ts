@@ -1,7 +1,6 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import WooCommerceRestApi from "@woocommerce/woocommerce-rest-api";
 import { prisma, connectToDatabase } from "@/lib/prisma";
 
 // Enhanced logging function for Vercel
@@ -16,21 +15,93 @@ function log(level: 'info' | 'error' | 'warn', message: string, data?: any) {
   }
 }
 
-// Improved save function with better error handling for Vercel
+// Get next order number
+async function getNextOrderNumber(): Promise<number> {
+  try {
+    // Get the next order number and increment it atomically
+    const result = await prisma.$queryRaw<{ next_order_id: number }[]>`
+      INSERT INTO order_counter (id, next_order_id) 
+      VALUES (1, 6266)
+      ON CONFLICT (id) 
+      DO UPDATE SET next_order_id = order_counter.next_order_id + 1
+      RETURNING next_order_id
+    `;
+
+    const [lastWooCommerceQuote] = await Promise.all([
+      // Keep this for fallback only
+      prisma.wooCommerceQuote.findFirst({
+        select: { woocommerceOrderId: true },
+        orderBy: { woocommerceOrderId: 'desc' }
+      })
+    ]);
+
+    // If we have results from the counter table, use that
+    if (result && result.length > 0) {
+      return result[0].next_order_id;
+    }
+
+    // Fallback: calculate from existing data (shouldn't happen with the new logic)
+    const maxOrderId = Math.max(
+      lastWooCommerceQuote?.woocommerceOrderId || 0,
+      6265 // Start from 6265
+    );
+
+    return maxOrderId + 1;
+  } catch (error: any) {
+    log('error', 'Failed to get next order number', { error: error.message });
+    // Fallback to timestamp-based ID if database fails
+    return Math.floor(Date.now() / 1000);
+  }
+}
+
+// Create the order_counter table if it doesn't exist and initialize with 6265
+async function ensureOrderCounterTable() {
+  try {
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS order_counter (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        next_order_id INTEGER NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    
+    // Initialize with 6265 if not exists
+    await prisma.$executeRaw`
+      INSERT INTO order_counter (id, next_order_id) 
+      VALUES (1, 6265) 
+      ON CONFLICT (id) DO NOTHING;
+    `;
+    
+    log('info', 'Order counter table ensured with starting number 6265');
+  } catch (error: any) {
+    log('warn', 'Could not ensure order counter table', { error: error.message });
+  }
+}
+
+// Improved save function with order number generation
 async function saveQuoteToDatabase(quoteData: any) {
   let retries = 3;
   let lastError: any = null;
+  let generatedOrderId: number | null = null;
 
   while (retries > 0) {
     try {
       log('info', `Attempting to save quote (${4 - retries}/3)`, {
-        woocommerceOrderId: quoteData.woocommerce_order_id,
         customerEmail: quoteData.customer_email,
         orderTotal: quoteData.order_total,
       });
 
       // Ensure database connection
       await connectToDatabase();
+
+      // Ensure order counter table exists
+      await ensureOrderCounterTable();
+
+      // Generate order number if not provided
+      if (!generatedOrderId) {
+        generatedOrderId = await getNextOrderNumber();
+        log('info', 'Generated order number', { orderId: generatedOrderId });
+      }
 
       // Test connection with shorter timeout for serverless
       const connectionTest = await Promise.race([
@@ -42,10 +113,10 @@ async function saveQuoteToDatabase(quoteData: any) {
 
       log('info', "Database connection test passed");
 
-      // Ensure all required fields are properly typed
+      // Create quote with generated order ID
       const quote = await prisma.wooCommerceQuote.create({
         data: {
-          woocommerceOrderId: parseInt(quoteData.woocommerce_order_id),
+          woocommerceOrderId: generatedOrderId,
           customerEmail: String(quoteData.customer_email || ''),
           customerName: String(quoteData.customer_name || ''),
           customerPhone: quoteData.customer_phone ? String(quoteData.customer_phone) : null,
@@ -60,11 +131,20 @@ async function saveQuoteToDatabase(quoteData: any) {
           shippingRegion: quoteData.shipping_region ? String(quoteData.shipping_region) : null,
           estimatedFulfillment: quoteData.estimated_fulfillment ? String(quoteData.estimated_fulfillment) : null,
           metaData: quoteData.meta_data || null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       });
 
-      log('info', "Quote saved successfully", { quoteId: quote.id });
-      return { success: true, data: quote };
+      log('info', "Quote saved successfully", { 
+        quoteId: quote.id, 
+        orderId: generatedOrderId 
+      });
+      
+      return { 
+        success: true, 
+        data: { ...quote, generatedOrderId } 
+      };
       
     } catch (error: any) {
       retries--;
@@ -74,22 +154,24 @@ async function saveQuoteToDatabase(quoteData: any) {
         error: error.message,
         code: error.code,
         retriesLeft: retries,
-        stack: error.stack?.split('\n').slice(0, 3) // Limited stack trace
+        stack: error.stack?.split('\n').slice(0, 3)
       });
 
       // Handle specific Prisma errors
       if (error.code === "P2002") {
-        log('error', "Unique constraint violation - duplicate entry");
-        break; // Don't retry on constraint violations
+        // Unique constraint violation - try generating new order number
+        log('warn', "Unique constraint violation - generating new order number");
+        generatedOrderId = null; // Reset to generate new number
+        if (retries > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          continue;
+        }
       } else if (error.code === "P1001" || error.code === "P1017") {
         log('warn', "Database connection issue - retrying...");
         if (retries > 0) {
-          await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds
+          await new Promise((resolve) => setTimeout(resolve, 2000));
           continue;
         }
-      } else if (error.code === "P1003") {
-        log('error', "Database does not exist");
-        break;
       }
 
       if (retries === 0) {
@@ -102,7 +184,7 @@ async function saveQuoteToDatabase(quoteData: any) {
   return { success: false, error: lastError || new Error("Max retries exceeded") };
 }
 
-// Separate email functions with better error handling
+// Email functions remain the same but update order reference
 async function sendCustomerConfirmation(emailData: any) {
   if (!process.env.RESEND_API_KEY) {
     throw new Error("RESEND_API_KEY is not configured");
@@ -325,11 +407,11 @@ async function sendSalesNotification(emailData: any) {
                 <ul>
                     <li>✅ Check stock availability with suppliers</li>
                     <li>📧 Confirm pricing and send payment link</li>
-                    <li>📋 Update order status in WooCommerce</li>
+                    <li>📋 Update order status in your admin system</li>
                     <li>📞 Follow up if needed within ${emailData.estimated_quote_time}</li>
                 </ul>
                 
-                <p><strong>WooCommerce Order:</strong> <a href="https://backend.hydroworks.co.za/wp/wp-admin/post.php?post=${emailData.order_id}&action=edit" target="_blank">View Order #${emailData.order_id}</a></p>
+                <p><strong>Order Reference:</strong> #${emailData.order_id}</p>
             </div>
         </div>
     </body>
@@ -358,97 +440,6 @@ async function sendSalesNotification(emailData: any) {
   const responseData = await response.json();
   log('info', 'Sales email sent successfully', { emailId: responseData.id });
   return responseData;
-}
-
-// WooCommerce API retry wrapper
-async function submitOrderWithRetry(api: any, orderData: any, maxRetries = 3) {
-  let lastError: any = null;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      log('info', `WooCommerce API attempt ${attempt}/${maxRetries}`);
-      
-      // Add jitter to prevent thundering herd
-      if (attempt > 1) {
-        const delay = (attempt - 1) * 2000 + Math.random() * 1000; // 2s, 3s + random
-        log('info', `Waiting ${Math.round(delay)}ms before retry...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-      
-      const startTime = Date.now();
-      const { data: order } = await api.post("orders", orderData);
-      const duration = Date.now() - startTime;
-      
-      log('info', `WooCommerce API success on attempt ${attempt}`, {
-        duration: `${duration}ms`,
-        orderId: order.id
-      });
-      
-      return order;
-      
-    } catch (error: any) {
-      lastError = error;
-      const isRetryableError = isWooCommerceRetryableError(error);
-      
-      log('warn', `WooCommerce API attempt ${attempt} failed`, {
-        error: error.message,
-        status: error.response?.status,
-        code: error.code,
-        isRetryable: isRetryableError,
-        remainingAttempts: maxRetries - attempt
-      });
-      
-      // Don't retry on client errors (4xx) except specific cases
-      if (!isRetryableError) {
-        log('error', 'Non-retryable WooCommerce error, failing immediately');
-        throw error;
-      }
-      
-      // If this was the last attempt, throw the error
-      if (attempt === maxRetries) {
-        log('error', 'All WooCommerce retry attempts failed');
-        throw error;
-      }
-    }
-  }
-  
-  throw lastError;
-}
-
-// Determine if a WooCommerce error is retryable
-function isWooCommerceRetryableError(error: any): boolean {
-  // Network errors (no response)
-  if (!error.response) {
-    return true;
-  }
-  
-  const status = error.response.status;
-  
-  // Retryable status codes
-  const retryableStatuses = [
-    408, // Request Timeout
-    429, // Too Many Requests
-    500, // Internal Server Error
-    502, // Bad Gateway  
-    503, // Service Unavailable
-    504, // Gateway Timeout
-    520, // Unknown Error (Cloudflare)
-    522, // Connection Timed Out (Cloudflare)
-    524, // A Timeout Occurred (Cloudflare)
-  ];
-  
-  if (retryableStatuses.includes(status)) {
-    return true;
-  }
-  
-  // Specific error codes that might be retryable
-  const errorCode = error.response?.data?.code;
-  const retryableCodes = [
-    'woocommerce_rest_cannot_create', // Sometimes temporary
-    'rest_cookie_invalid_nonce', // Can be temporary
-  ];
-  
-  return retryableCodes.includes(errorCode);
 }
 
 // Email service integration with better error handling
@@ -490,8 +481,6 @@ export async function POST(req: NextRequest) {
   try {
     // Validate environment variables
     const missingEnvVars = [];
-    if (!process.env.WC_API_KEY) missingEnvVars.push('WC_API_KEY');
-    if (!process.env.WC_API_SECRET) missingEnvVars.push('WC_API_SECRET');
     if (!process.env.DATABASE_URL) missingEnvVars.push('DATABASE_URL');
 
     if (missingEnvVars.length > 0) {
@@ -519,8 +508,6 @@ export async function POST(req: NextRequest) {
       shipping,
       line_items,
       shipping_lines = [],
-      payment_method = "bacs",
-      payment_method_title = "Quote Request - Payment Link to Follow",
       customer_note,
       meta_data = [],
     } = body;
@@ -547,97 +534,7 @@ export async function POST(req: NextRequest) {
       customerEmail: billing.email 
     });
 
-    // Initialize WooCommerce API with retry-friendly settings
-    const api = new WooCommerceRestApi({
-      url: "https://backend.hydroworks.co.za/wp",
-      consumerKey: process.env.WC_API_KEY,
-      consumerSecret: process.env.WC_API_SECRET,
-      version: "wc/v3",
-      timeout: 20000, // 20 second timeout
-      axiosConfig: {
-        // Add retry-friendly headers
-        headers: {
-          'Connection': 'keep-alive',
-          'Keep-Alive': 'timeout=20, max=1000'
-        }
-      }
-    });
-
-    // Format line items for WooCommerce with validation
-    const formattedLineItems = line_items
-      .map((item: any) => {
-        const lineItem: any = {
-          quantity: parseInt(String(item.quantity || 1)),
-        };
-
-        // Add price if provided
-        if (item.price) {
-          lineItem.price = parseFloat(String(item.price));
-        }
-
-        // Handle variable products (have variation_id)
-        if (item.variation_id) {
-          if (item.parent_id) {
-            lineItem.product_id = parseInt(String(item.parent_id));
-          } else {
-            log('warn', 'Variation missing parent product_id', { item });
-          }
-          lineItem.variation_id = parseInt(String(item.variation_id));
-        } else if (item.product_id) {
-          // Simple products
-          lineItem.product_id = parseInt(String(item.product_id));
-        }
-
-        return lineItem;
-      })
-      .filter((item) => item.product_id); // Remove items without product_id
-
-    if (formattedLineItems.length === 0) {
-      log('error', 'No valid line items after processing');
-      return NextResponse.json(
-        { success: false, message: "No valid products found in line items" },
-        { status: 400 }
-      );
-    }
-
-    // Prepare order data for WooCommerce
-    const orderData: Record<string, any> = {
-      payment_method,
-      payment_method_title,
-      set_paid: false,
-      status: "pending",
-      billing,
-      shipping,
-      line_items: formattedLineItems,
-      shipping_lines: shipping_lines || [],
-      meta_data: [
-        ...meta_data,
-        {
-          key: "_is_quote_request",
-          value: "yes",
-        },
-        {
-          key: "_quote_request_date",
-          value: new Date().toISOString(),
-        },
-      ],
-    };
-
-    if (customer_note) {
-      orderData.customer_note = String(customer_note);
-    }
-
-    log('info', 'Formatted line items for WooCommerce', { 
-      originalCount: line_items.length,
-      formattedCount: formattedLineItems.length 
-    });
-
-    // Submit order to WooCommerce with retry logic
-    log('info', 'Submitting order to WooCommerce...');
-    const order = await submitOrderWithRetry(api, orderData);
-    log('info', 'WooCommerce order created successfully', { orderId: order.id });
-
-    // Calculate totals for database and email
+    // Calculate totals
     const lineItemsTotal = line_items.reduce((sum: number, item: any) => {
       const price = parseFloat(String(item.price || '0'));
       const quantity = parseInt(String(item.quantity || 1));
@@ -652,7 +549,6 @@ export async function POST(req: NextRequest) {
 
     // Prepare quote data for database
     const quoteData = {
-      woocommerce_order_id: order.id,
       customer_email: billing.email,
       customer_name: `${billing.first_name} ${billing.last_name}`.trim(),
       customer_phone: billing.phone || null,
@@ -663,7 +559,7 @@ export async function POST(req: NextRequest) {
       billing_address: `${billing.address_1}${
         billing.address_2 ? ", " + billing.address_2 : ""
       }, ${billing.city}, ${billing.state}, ${billing.postcode}`.trim(),
-      line_items: line_items, // Store original line_items with names
+      line_items: line_items,
       shipping_total: shippingTotal.toFixed(2),
       order_total: totalAmount.toFixed(2),
       customer_note: customer_note || null,
@@ -673,11 +569,17 @@ export async function POST(req: NextRequest) {
       meta_data: meta_data,
     };
 
-    // Save quote to database
+    // Save quote to database (this will generate the order number)
     log('info', 'Saving quote to database...');
     const quoteResult = await saveQuoteToDatabase(quoteData);
 
-    // Prepare email data
+    if (!quoteResult.success) {
+      throw new Error(`Failed to save quote: ${quoteResult.error?.message}`);
+    }
+
+    const generatedOrderId = quoteResult.data?.generatedOrderId;
+
+    // Prepare email data using generated order ID
     const emailData = {
       customer_email: billing.email,
       customer_name: `${billing.first_name} ${billing.last_name}`.trim(),
@@ -687,7 +589,7 @@ export async function POST(req: NextRequest) {
         billing.address_2 ? ", " + billing.address_2 : ""
       }, ${billing.city}, ${billing.state}, ${billing.postcode}`.trim(),
       customer_note: customer_note || '',
-      order_id: order.id,
+      order_id: generatedOrderId,
       order_total: totalAmount.toFixed(2),
       shipping_total: shippingTotal.toFixed(2),
       shipping_region: meta_data.find((m: any) => m.key === "_shipping_region")?.value || billing.state || "Unknown",
@@ -711,8 +613,8 @@ export async function POST(req: NextRequest) {
 
     const processingTime = Date.now() - startTime;
     log('info', 'Quote request processing completed', {
-      orderId: order.id,
-      quoteSuccess: quoteResult.success,
+      orderId: generatedOrderId,
+      quoteId: quoteResult.data?.id,
       emailSuccess: emailResult.success,
       processingTimeMs: processingTime
     });
@@ -721,12 +623,11 @@ export async function POST(req: NextRequest) {
       success: true,
       message: "Quote request submitted successfully",
       order: {
-        id: order.id,
-        status: order.status,
-        total: order.total
+        id: generatedOrderId,
+        quote_id: quoteResult.data?.id,
+        status: "pending",
+        total: totalAmount.toFixed(2)
       },
-      quote_saved: quoteResult.success,
-      database_quote_id: quoteResult.success ? quoteResult.data?.id : null,
       emails_sent: emailResult.success,
       processing_time_ms: processingTime
     });
@@ -738,17 +639,15 @@ export async function POST(req: NextRequest) {
     const errorDetails = {
       message: error.message || "Unknown error",
       code: error.code,
-      response: error.response?.data,
-      stack: error.stack?.split('\n').slice(0, 5), // Limited stack trace
+      stack: error.stack?.split('\n').slice(0, 5),
       processingTimeMs: processingTime
     };
 
     log('error', 'Quote submission failed', errorDetails);
 
     // Return appropriate error response
-    const statusCode = error.response?.status || (error.code?.startsWith('P') ? 500 : 500);
-    const userMessage = error.response?.data?.message || 
-                       (error.code?.startsWith('P') ? "Database error occurred" : "Quote request submission failed");
+    const statusCode = error.code?.startsWith('P') ? 500 : 500;
+    const userMessage = error.code?.startsWith('P') ? "Database error occurred" : "Quote request submission failed";
 
     return NextResponse.json(
       {
