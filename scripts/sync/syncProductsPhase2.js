@@ -76,8 +76,7 @@ async function syncProducts(products) {
         description: product.description || "",             // <-- ADD
         short_description: product.short_description || "", // <-- ADD
       },
-    });
-    
+    });    
 
     // Connect categories
     if (product.categories && product.categories.length) {

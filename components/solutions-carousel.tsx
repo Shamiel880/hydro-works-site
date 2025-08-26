@@ -15,42 +15,69 @@ import { useRef } from "react"
 const solutions = [
   {
     icon: TreePine,
-    title: "Vertical Farming",
+    title: "Urban Farming",
     description:
-      "Space-efficient growing systems that maximize yield per square meter",
-    features: ["LED Integration", "Climate Control", "Automated Irrigation"],
+      "Tools and guidance to help urban farmers grow healthy crops and thrive",
+    features: [
+      "Solutions for soil and hydroponics",
+      "Affordable inputs for every scale",
+      "Support from planting to harvest",
+    ],
   },
   {
     icon: Thermometer,
-    title: "Grow Tents & Climate Control",
+    title: "Greenthumb Supplies",
     description:
-      "Complete environmental control for optimal growing conditions",
-    features: ["Temperature Control", "Humidity Management", "Air Circulation"],
+      "Essential tools and inputs to keep every grower productive and prepared",
+    features: [
+      "Reliable quality products",
+      "From hydroponics to organics",
+      "Support for every crop",
+    ],
   },
   {
     icon: Beaker,
     title: "Nutrients & Microbes",
     description:
-      "Premium organic and synthetic nutrients with beneficial microorganisms",
-    features: ["Organic Certified", "pH Balanced", "Beneficial Bacteria"],
+      "Balanced nutrition and beneficial microbes to keep every crop strong and healthy",
+    features: [
+      "Organic and synthetic options",
+      "Improves soil and root health",
+      "Guidance on correct use",
+    ],
   },
   {
     icon: Mountain,
     title: "Grow Media",
-    description: "High-quality growing substrates for all cultivation methods",
-    features: ["Coco Coir", "Rockwool", "Soil Mixes"],
+    description:
+      "Premium soil mix and substrates designed for strong roots and high yields",
+    features: [
+      "Custom premium soil mix",
+      "Coco coir and blends",
+      "Rockwool and other media",
+    ],
   },
   {
     icon: Zap,
     title: "Smart Automation",
-    description: "IoT-enabled systems for precision agriculture and monitoring",
-    features: ["Remote Monitoring", "Automated Dosing", "Data Analytics"],
+    description:
+      "Easy-to-use tools that save time and help growers manage crops with confidence",
+    features: [
+      "Simple remote checks",
+      "Automatic feeding options",
+      "Clear crop performance data",
+    ],
   },
   {
     icon: Droplets,
     title: "Water Management",
-    description: "Efficient irrigation and water recycling systems",
-    features: ["Drip Systems", "Water Recycling", "Filtration"],
+    description:
+      "Reliable irrigation solutions to help growers save water and grow healthier crops",
+    features: [
+      "Drip irrigation systems",
+      "Water-saving recycling",
+      "Easy filtration options",
+    ],
   },
 ]
 
