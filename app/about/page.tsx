@@ -128,7 +128,7 @@ export default function AboutPage() {
                   className="rounded-2xl shadow-lg"
                 />
                 <Image
-                  src="images//local-garden.webp?height=300&width=300&text=Team+Working"
+                  src="/images//local-garden.webp?height=300&width=300&text=Team+Working"
                   alt="Hydro Works team"
                   width={300}
                   height={300}
