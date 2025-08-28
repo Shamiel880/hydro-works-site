@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { motion } from "framer-motion"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
 import {
   Thermometer,
   Beaker,
@@ -9,8 +9,8 @@ import {
   TreePine,
   Zap,
   Droplets,
-} from "lucide-react"
-import { useRef } from "react"
+} from "lucide-react";
+import { useRef } from "react";
 
 const solutions = [
   {
@@ -23,6 +23,7 @@ const solutions = [
       "Affordable inputs for every scale",
       "Support from planting to harvest",
     ],
+    backgroundImage: "url('/images/urban-farming.webp')",
   },
   {
     icon: Thermometer,
@@ -34,6 +35,7 @@ const solutions = [
       "From hydroponics to organics",
       "Support for every crop",
     ],
+    backgroundImage: "url('/images/greenthumb-supplies.webp')",
   },
   {
     icon: Beaker,
@@ -45,6 +47,7 @@ const solutions = [
       "Improves soil and root health",
       "Guidance on correct use",
     ],
+    backgroundImage: "url('/images/nutrients-microbes.webp')",
   },
   {
     icon: Mountain,
@@ -56,6 +59,7 @@ const solutions = [
       "Coco coir and blends",
       "Rockwool and other media",
     ],
+    backgroundImage: "url('/images/grow-media.webp')",
   },
   {
     icon: Zap,
@@ -67,6 +71,7 @@ const solutions = [
       "Automatic feeding options",
       "Clear crop performance data",
     ],
+    backgroundImage: "url('/images/automation.webp')",
   },
   {
     icon: Droplets,
@@ -78,11 +83,12 @@ const solutions = [
       "Water-saving recycling",
       "Easy filtration options",
     ],
+    backgroundImage: "url('/images/water-management.webp')",
   },
-]
+];
 
 export function SolutionsCarousel() {
-  const carouselRef = useRef<HTMLDivElement>(null)
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="relative overflow-hidden">
@@ -106,31 +112,44 @@ export function SolutionsCarousel() {
             transition={{ duration: 0.6, delay: index * 0.1 }}
             viewport={{ once: true }}
           >
-            <Card className="h-full border-hydro-green/20 hover:border-hydro-green/40 transition-all duration-300 hover:shadow-xl rounded-2xl">
-              <CardHeader>
-                <div className="h-12 w-12 rounded-xl bg-hydro-green/10 flex items-center justify-center mb-4">
-                  <solution.icon className="h-6 w-6 text-hydro-green" />
-                </div>
-                <CardTitle className="text-hydro-onyx text-xl">
-                  {solution.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-hydro-onyx/70 mb-4">
-                  {solution.description}
-                </p>
-                <ul className="space-y-2">
-                  {solution.features.map((feature, featureIndex) => (
-                    <li
-                      key={featureIndex}
-                      className="flex items-center text-sm text-hydro-onyx/80"
-                    >
-                      <div className="w-2 h-2 bg-hydro-green rounded-full mr-3" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
+            <Card
+              className="h-[420px] border-none hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-2xl overflow-hidden relative"
+              style={{
+                backgroundImage: solution.backgroundImage,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            >
+              {/* Dark overlay for better text readability */}
+              <div className="absolute inset-0 bg-black/60 hover:bg-black/50 transition-colors duration-300" />
+
+              {/* Content with relative positioning to appear above overlay */}
+              <div className="relative z-10 h-full flex flex-col">
+                <CardHeader>
+                  <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 border border-white/30">
+                    <solution.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <CardTitle className="text-white text-xl font-bold">
+                    {solution.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="mt-auto">
+                  <p className="text-white/90 mb-4 font-medium">
+                    {solution.description}
+                  </p>
+                  <ul className="space-y-2">
+                    {solution.features.map((feature, featureIndex) => (
+                      <li
+                        key={featureIndex}
+                        className="flex items-center text-sm text-white/85"
+                      >
+                        <div className="w-2 h-2 bg-white rounded-full mr-3" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </div>
             </Card>
           </motion.div>
         ))}
@@ -146,5 +165,5 @@ export function SolutionsCarousel() {
         ))}
       </div>
     </div>
-  )
+  );
 }
