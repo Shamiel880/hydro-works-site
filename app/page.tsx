@@ -68,7 +68,7 @@ export default function HomePage() {
     <>
       <Head>
         <title>Hydro Works – Holistic Horticultural Solutions</title>
-        <meta name="description" content="From organic growing to high-tech hydroponics, Hydro Works provides sustainable, data-driven horticultural systems for South African growers." />
+        <meta name="description" content="From organic cultivation to innovative hydroponic systems, we partner with growers to provide sustainable, practical horticultural solutions that boost productivity, enhance crop quality, and support success across South Africa." />
         <link rel="canonical" href="https://hydroworks.co.za/" />
         <link rel="preload" as="image" href="/images/cape-town.webp" />
         <meta property="og:title" content="Hydro Works – Holistic Horticultural Solutions" />
@@ -92,7 +92,7 @@ export default function HomePage() {
             <h1 className="text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl mb-6">
               <span className="bg-gradient-to-r from-hydro-green to-hydro-onyx bg-clip-text text-transparent">Holistic Horticultural</span><br /><span className="text-hydro-onyx">Solutions</span>
             </h1>
-            <p className="text-xl leading-8 text-hydro-onyx/80 max-w-3xl mx-auto mb-10">From organic growing to high-tech hydroponics — we cultivate your success with sustainable, data-driven systems designed for South African growers.</p>
+            <p className="text-xl leading-8 text-hydro-onyx/80 max-w-3xl mx-auto mb-10">From organic cultivation to innovative hydroponic systems, we partner with growers to provide sustainable, practical horticultural solutions that boost productivity, enhance crop quality, and support success across South Africa.</p>
             <Button size="lg" onClick={()=>{document.getElementById("hydro-systems")?.scrollIntoView({behavior:"smooth"});}} className="bg-hydro-green hover:bg-hydro-green/90 text-hydro-white px-10 py-6 text-xl rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">Explore Our Systems<ArrowRight className="ml-3 h-6 w-6" /></Button>
           </div>
         </section>
