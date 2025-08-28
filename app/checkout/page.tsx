@@ -207,7 +207,7 @@ const lineItemsPayload = cart.map(({ product, quantity }) => {
           shipping: shippingCost,
           customer_name: `${billing.first_name} ${billing.last_name}`,
           customer_email: billing.email,
-          estimated_quote_time: projectType === 'urgent' ? '12-24 hours' : '24-48 hours',
+          estimated_quote_time: projectType === 'urgent' ? 'within a few hours' : 'usually within a few hours, and always by the next business day at the latest',
           estimated_fulfillment: estimatedFulfillment,
         };
 
@@ -249,7 +249,7 @@ const lineItemsPayload = cart.map(({ product, quantity }) => {
                   <span className="bg-hydro-green text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mt-0.5">1</span>
                   <div>
                     <div className="font-medium">Stock Confirmation</div>
-                    <div className="text-sm text-hydro-onyx/70">We'll confirm availability with our suppliers within {orderSummary.estimated_quote_time}</div>
+                    <div className="text-sm text-hydro-onyx/70">We'll confirm stock shortly — {orderSummary.estimated_quote_time}</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -362,7 +362,7 @@ const lineItemsPayload = cart.map(({ product, quantity }) => {
                 <div className="text-center">
                   <div className="bg-hydro-green text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold mx-auto mb-2">2</div>
                   <div className="font-medium text-hydro-onyx">Stock Check</div>
-                  <div className="text-sm text-hydro-onyx/70">24-48 hour confirmation</div>
+                  <div className="text-sm text-hydro-onyx/70">Usually within a few hours</div>
                 </div>
                 <div className="text-center">
                   <div className="bg-hydro-green text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold mx-auto mb-2">3</div>
@@ -413,7 +413,7 @@ const lineItemsPayload = cart.map(({ product, quantity }) => {
                 Request Your Quote
               </h2>
               <p className="text-hydro-onyx/70 text-sm mb-6">
-                Fill in your details below. We'll confirm stock and send you a payment link within 24-48 hours.
+                Fill in your details below. We'll confirm stock shortly — usually within a few hours, and always by the next business day at the latest.
               </p>
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -541,7 +541,7 @@ const lineItemsPayload = cart.map(({ product, quantity }) => {
                     <div className="font-medium text-green-800 mb-1">Shipping to {shippingRegion}</div>
                     <div className="text-green-700">
                       <strong>Shipping:</strong> R{shippingCost.toFixed(2)} • 
-                      <strong> Timeline:</strong> Stock confirmation 24-48hrs, then {calculateEstimatedFulfillment()} delivery
+                      <strong> Timeline:</strong> Stock confirmed usually within a few hours, and always by the next business day at the latest, then {calculateEstimatedFulfillment()} delivery
                     </div>
                   </div>
                 </div>

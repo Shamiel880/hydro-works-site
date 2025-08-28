@@ -220,7 +220,7 @@ async function sendCustomerConfirmation(emailData: any) {
             
             <div class="steps">
                 <h3>What happens next:</h3>
-                <div class="step">✅ <strong>Step 1:</strong> We confirm stock availability with our suppliers</div>
+                <div class="step">✅ <strong>Step 1:</strong> We'll confirm stock shortly — usually within a few hours, and always by the next business day at the latest</div>
                 <div class="step">⏱️ <strong>Step 2:</strong> You'll receive a secure payment link via email</div>
                 <div class="step">🚚 <strong>Step 3:</strong> Fast delivery within 3-5 business days after payment</div>
             </div>
@@ -598,7 +598,7 @@ export async function POST(req: NextRequest) {
         quantity: parseInt(String(item.quantity || 1)),
         price: String(item.price || "0"),
       })),
-      estimated_quote_time: meta_data.find((m: any) => m.key === "_customer_project_type")?.value === "urgent" ? "12-24 hours" : "24-48 hours",
+      estimated_quote_time: meta_data.find((m: any) => m.key === "_customer_project_type")?.value === "urgent" ? "within a few hours" : "usually within a few hours, and always by the next business day at the latest",
       project_type: meta_data.find((m: any) => m.key === "_customer_project_type")?.value || "general",
     };
 

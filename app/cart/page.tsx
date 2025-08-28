@@ -339,7 +339,7 @@ export default function CartPage() {
                           <div className="font-medium mb-1">Quote Process</div>
                           <ul className="text-xs space-y-1 text-green-700">
                             <li>• No payment required now</li>
-                            <li>• Stock confirmation within 24-48hrs</li>
+                            <li>• Stock confirmed within hours — always by next business day</li>
                             <li>• Secure payment link via email</li>
                             <li>• Fast delivery after payment</li>
                           </ul>
